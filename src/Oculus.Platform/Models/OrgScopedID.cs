@@ -1,0 +1,11 @@
+namespace Oculus.Platform.Models
+{
+    using System;
+
+    public class OrgScopedID
+    {
+        public readonly ulong ID;
+
+        public OrgScopedID(IntPtr o) => ID = CAPI.ovr_OrgScopedID_GetID(o);
+    }
+}

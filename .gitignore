@@ -1,0 +1,47 @@
+# Visual Studio
+*.db
+*.opendb
+*.csproj.user
+.vs/
+.vscode/
+packages/
+packages.config
+
+# Unity3D
+Library/
+UnityGenerated/
+DerivedData/
+Assets/AssetStoreTools*
+Logs/
+*.pidb.meta
+sysinfo.txt
+*.apk
+*.unitypackage
+UIElementsSchema/
+**/Assets/_Ter*
+
+# Unity3D Plugins
+**/Assets/Plugins/**/*
+
+# Python
+__pycache__/
+
+# Makefiles
+Makefile
+*.make
+
+# Misc
+*.7z
+*.zip
+*.tar.gz
+
+# Sublime text
+*.sublime-project
+*.sublime-workspace
+
+# Directories we don't ever want to commit
+_build
+bin
+obj
+temp
+ipch

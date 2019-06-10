@@ -1,0 +1,31 @@
+#pragma warning disable 0618
+
+namespace Oculus.Platform.Models
+{
+    using System;
+
+    public class LaunchDetails
+    {
+        public readonly string DeeplinkMessage;
+        public readonly string LaunchSource;
+        public readonly LaunchType LaunchType;
+        public readonly ulong RoomID;
+        // May be null. Check before using.
+        public readonly UserList UsersOptional;
+        [Obsolete("Deprecated in favor of UsersOptional")]
+        public readonly UserList Users;
+
+        public LaunchDetails(IntPtr o)
+        {
+            DeeplinkMessage = CAPI.ovr_LaunchDetails_GetDeeplinkMessage(o);
+            LaunchSource = CAPI.ovr_LaunchDetails_GetLaunchSource(o);
+            LaunchType = CAPI.ovr_LaunchDetails_GetLaunchType(o);
+            RoomID = CAPI.ovr_LaunchDetails_GetRoomID(o);
+            {
+                var pointer = CAPI.ovr_LaunchDetails_GetUsers(o);
+                Users = new UserList(pointer);
+                UsersOptional = pointer == IntPtr.Zero ? null : Users;
+            }
+        }
+    }
+}
