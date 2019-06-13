@@ -15,7 +15,6 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
 
 /// <summary>
 /// A PCM buffer of data for a haptics effect.
@@ -67,28 +66,20 @@ public class OVRHapticsClip
     /// </summary>
     public OVRHapticsClip(OVRHapticsClip a, OVRHapticsClip b)
     {
-        int maxCount = a.Count;
+        var maxCount = a.Count;
         if (b.Count > maxCount)
             maxCount = b.Count;
-
         Capacity = maxCount;
         Samples = new byte[Capacity * OVRHaptics.Config.SampleSizeInBytes];
-
-        for (int i = 0; i < a.Count || i < b.Count; i++)
-        {
+        for (var i = 0; i < a.Count || i < b.Count; i++)
             if (OVRHaptics.Config.SampleSizeInBytes == 1)
             {
                 byte sample = 0; // TODO support multi-byte samples
-                if ((i < a.Count) && (i < b.Count))
-                    sample = (byte)(Mathf.Clamp(a.Samples[i] + b.Samples[i], 0, System.Byte.MaxValue)); // TODO support multi-byte samples
-                else if (i < a.Count)
-                    sample = a.Samples[i]; // TODO support multi-byte samples
-                else if (i < b.Count)
-                    sample = b.Samples[i]; // TODO support multi-byte samples
-
+                if (i < a.Count && i < b.Count) sample = (byte)Mathf.Clamp(a.Samples[i] + b.Samples[i], 0, byte.MaxValue); // TODO support multi-byte samples
+                else if (i < a.Count) sample = a.Samples[i]; // TODO support multi-byte samples
+                else if (i < b.Count) sample = b.Samples[i]; // TODO support multi-byte samples
                 WriteSample(sample); // TODO support multi-byte samples
             }
-        }
     }
 
     /// <summary>
@@ -96,9 +87,8 @@ public class OVRHapticsClip
     /// </summary>
     public OVRHapticsClip(AudioClip audioClip, int channel = 0)
     {
-        float[] audioData = new float[audioClip.samples * audioClip.channels];
+        var audioData = new float[audioClip.samples * audioClip.channels];
         audioClip.GetData(audioData, 0);
-
         InitializeFromAudioFloatTrack(audioData, audioClip.frequency, audioClip.channels, channel);
     }
 
@@ -108,50 +98,35 @@ public class OVRHapticsClip
     public void WriteSample(byte sample) // TODO support multi-byte samples
     {
         if (Count >= Capacity)
-        {
             //Debug.LogError("Attempted to write OVRHapticsClip sample out of range - Count:" + Count + " Capacity:" + Capacity);
             return;
-        }
-
         if (OVRHaptics.Config.SampleSizeInBytes == 1)
-        {
             Samples[Count * OVRHaptics.Config.SampleSizeInBytes] = sample; // TODO support multi-byte samples
-        }
-
         Count++;
     }
 
     /// <summary>
     /// Clears the clip and resets its size to 0.
     /// </summary>
-    public void Reset()
-    {
-        Count = 0;
-    }
+    public void Reset() => Count = 0;
 
-    private void InitializeFromAudioFloatTrack(float[] sourceData, double sourceFrequency, int sourceChannelCount, int sourceChannel)
+    void InitializeFromAudioFloatTrack(float[] sourceData, double sourceFrequency, int sourceChannelCount, int sourceChannel)
     {
-        double stepSizePrecise = (sourceFrequency + 1e-6) / OVRHaptics.Config.SampleRateHz;
-
+        var stepSizePrecise = (sourceFrequency + 1e-6) / OVRHaptics.Config.SampleRateHz;
         if (stepSizePrecise < 1.0)
             return;
-
-        int stepSize = (int)stepSizePrecise;
-        double stepSizeError = stepSizePrecise - stepSize;
-        double accumulatedStepSizeError = 0.0f;
-        int length = sourceData.Length;
-
+        var stepSize = (int)stepSizePrecise;
+        var stepSizeError = stepSizePrecise - stepSize;
+        var accumulatedStepSizeError = 0.0;
+        var length = sourceData.Length;
         Count = 0;
         Capacity = length / sourceChannelCount / stepSize + 1;
         Samples = new byte[Capacity * OVRHaptics.Config.SampleSizeInBytes];
-
-        int i = sourceChannel % sourceChannelCount;
+        var i = sourceChannel % sourceChannelCount;
         while (i < length)
         {
             if (OVRHaptics.Config.SampleSizeInBytes == 1)
-            {
                 WriteSample((byte)(Mathf.Clamp01(Mathf.Abs(sourceData[i])) * System.Byte.MaxValue)); // TODO support multi-byte samples
-            }
             i += stepSize * sourceChannelCount;
             accumulatedStepSizeError += stepSizeError;
             if ((int)accumulatedStepSizeError > 0)

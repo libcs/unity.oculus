@@ -69,69 +69,30 @@ public class OVRSystemPerfMetrics
 
         public string ToJSON()
         {
-            OVRSimpleJSON.JSONObject jsonNode = new OVRSimpleJSON.JSONObject();
+            var jsonNode = new OVRSimpleJSON.JSONObject();
             jsonNode.Add("frameCount", new OVRSimpleJSON.JSONNumber(frameCount));
             jsonNode.Add("frameTime", new OVRSimpleJSON.JSONNumber(frameTime));
             jsonNode.Add("deltaFrameTime", new OVRSimpleJSON.JSONNumber(deltaFrameTime));
-            if (appCpuTime_IsValid)
-            {
-                jsonNode.Add("appCpuTime", new OVRSimpleJSON.JSONNumber(appCpuTime));
-            }
-            if (appGpuTime_IsValid)
-            {
-                jsonNode.Add("appGpuTime", new OVRSimpleJSON.JSONNumber(appGpuTime));
-            }
-            if (compositorCpuTime_IsValid)
-            {
-                jsonNode.Add("compositorCpuTime", new OVRSimpleJSON.JSONNumber(compositorCpuTime));
-            }
-            if (compositorGpuTime_IsValid)
-            {
-                jsonNode.Add("compositorGpuTime", new OVRSimpleJSON.JSONNumber(compositorGpuTime));
-            }
-            if (compositorDroppedFrameCount_IsValid)
-            {
-                jsonNode.Add("compositorDroppedFrameCount", new OVRSimpleJSON.JSONNumber(compositorDroppedFrameCount));
-            }
-            if (systemGpuUtilPercentage_IsValid)
-            {
-                jsonNode.Add("systemGpuUtilPercentage", new OVRSimpleJSON.JSONNumber(systemGpuUtilPercentage));
-            }
-            if (systemCpuUtilAveragePercentage_IsValid)
-            {
-                jsonNode.Add("systemCpuUtilAveragePercentage", new OVRSimpleJSON.JSONNumber(systemCpuUtilAveragePercentage));
-            }
-            if (systemCpuUtilWorstPercentage_IsValid)
-            {
-                jsonNode.Add("systemCpuUtilWorstPercentage", new OVRSimpleJSON.JSONNumber(systemCpuUtilWorstPercentage));
-            }
-            if (deviceCpuClockFrequencyInMHz_IsValid)
-            {
-                jsonNode.Add("deviceCpuClockFrequencyInMHz", new OVRSimpleJSON.JSONNumber(deviceCpuClockFrequencyInMHz));
-            }
-            if (deviceGpuClockFrequencyInMHz_IsValid)
-            {
-                jsonNode.Add("deviceGpuClockFrequencyInMHz", new OVRSimpleJSON.JSONNumber(deviceGpuClockFrequencyInMHz));
-            }
-            if (deviceCpuClockLevel_IsValid)
-            {
-                jsonNode.Add("deviceCpuClockLevel", new OVRSimpleJSON.JSONNumber(deviceCpuClockLevel));
-            }
-            if (deviceGpuClockLevel_IsValid)
-            {
-                jsonNode.Add("deviceGpuClockLevel", new OVRSimpleJSON.JSONNumber(deviceGpuClockLevel));
-            }
-            string str = jsonNode.ToString();
-            return str;
+            if (appCpuTime_IsValid) jsonNode.Add("appCpuTime", new OVRSimpleJSON.JSONNumber(appCpuTime));
+            if (appGpuTime_IsValid) jsonNode.Add("appGpuTime", new OVRSimpleJSON.JSONNumber(appGpuTime));
+            if (compositorCpuTime_IsValid) jsonNode.Add("compositorCpuTime", new OVRSimpleJSON.JSONNumber(compositorCpuTime));
+            if (compositorGpuTime_IsValid) jsonNode.Add("compositorGpuTime", new OVRSimpleJSON.JSONNumber(compositorGpuTime));
+            if (compositorDroppedFrameCount_IsValid) jsonNode.Add("compositorDroppedFrameCount", new OVRSimpleJSON.JSONNumber(compositorDroppedFrameCount));
+            if (systemGpuUtilPercentage_IsValid) jsonNode.Add("systemGpuUtilPercentage", new OVRSimpleJSON.JSONNumber(systemGpuUtilPercentage));
+            if (systemCpuUtilAveragePercentage_IsValid) jsonNode.Add("systemCpuUtilAveragePercentage", new OVRSimpleJSON.JSONNumber(systemCpuUtilAveragePercentage));
+            if (systemCpuUtilWorstPercentage_IsValid) jsonNode.Add("systemCpuUtilWorstPercentage", new OVRSimpleJSON.JSONNumber(systemCpuUtilWorstPercentage));
+            if (deviceCpuClockFrequencyInMHz_IsValid) jsonNode.Add("deviceCpuClockFrequencyInMHz", new OVRSimpleJSON.JSONNumber(deviceCpuClockFrequencyInMHz));
+            if (deviceGpuClockFrequencyInMHz_IsValid) jsonNode.Add("deviceGpuClockFrequencyInMHz", new OVRSimpleJSON.JSONNumber(deviceGpuClockFrequencyInMHz));
+            if (deviceCpuClockLevel_IsValid) jsonNode.Add("deviceCpuClockLevel", new OVRSimpleJSON.JSONNumber(deviceCpuClockLevel));
+            if (deviceGpuClockLevel_IsValid) jsonNode.Add("deviceGpuClockLevel", new OVRSimpleJSON.JSONNumber(deviceGpuClockLevel));
+            return jsonNode.ToString();
         }
 
         public bool LoadFromJSON(string json)
         {
-            OVRSimpleJSON.JSONObject jsonNode = OVRSimpleJSON.JSONObject.Parse(json) as OVRSimpleJSON.JSONObject;
+            var jsonNode = OVRSimpleJSON.JSONObject.Parse(json) as OVRSimpleJSON.JSONObject;
             if (jsonNode == null)
-            {
                 return false;
-            }
             frameCount = jsonNode["frameCount"] != null ? jsonNode["frameCount"].AsInt : 0;
             frameTime = jsonNode["frameTime"] != null ? jsonNode["frameTime"].AsFloat : 0;
             deltaFrameTime = jsonNode["deltaFrameTime"] != null ? jsonNode["deltaFrameTime"].AsFloat : 0;
@@ -167,9 +128,9 @@ public class OVRSystemPerfMetrics
     {
         public static OVRSystemPerfMetricsTcpServer singleton = null;
 
-        private OVRNetwork.OVRNetworkTcpServer tcpServer = new OVRNetwork.OVRNetworkTcpServer();
+        OVRNetwork.OVRNetworkTcpServer tcpServer = new OVRNetwork.OVRNetworkTcpServer();
 
-        public int listeningPort = OVRSystemPerfMetrics.TcpListeningPort;
+        public int listeningPort = TcpListeningPort;
 
         void OnEnable()
         {
@@ -179,48 +140,40 @@ public class OVRSystemPerfMetrics
                 return;
             }
             else
-            {
                 singleton = this;
-            }
-
             if (Application.isEditor)
-            {
                 Application.runInBackground = true;
-            }
             tcpServer.StartListening(listeningPort);
         }
 
         void OnDisable()
         {
             tcpServer.StopListening();
-
             singleton = null;
-
             Debug.Log("[OVRSystemPerfMetricsTcpServer] server destroyed");
         }
 
-        private void Update()
+        void Update()
         {
             if (tcpServer.HasConnectedClient())
             {
-                PerfMetrics metrics = GatherPerfMetrics();
-                string json = metrics.ToJSON();
-                byte[] bytes = Encoding.UTF8.GetBytes(json);
-                tcpServer.Broadcast(OVRSystemPerfMetrics.PayloadTypeMetrics, bytes);
+                var metrics = GatherPerfMetrics();
+                var json = metrics.ToJSON();
+                var bytes = Encoding.UTF8.GetBytes(json);
+                tcpServer.Broadcast(PayloadTypeMetrics, bytes);
             }
         }
 
         PerfMetrics GatherPerfMetrics()
         {
-            PerfMetrics metrics = new PerfMetrics();
+            var metrics = new PerfMetrics
+            {
+                frameCount = Time.frameCount,
+                frameTime = Time.unscaledTime,
+                deltaFrameTime = Time.unscaledDeltaTime
+            };
 
-            metrics.frameCount = Time.frameCount;
-            metrics.frameTime = Time.unscaledTime;
-            metrics.deltaFrameTime = Time.unscaledDeltaTime;
-
-            float? floatValue;
-            int? intValue;
-
+            float? floatValue; int? intValue;
             floatValue = OVRPlugin.GetPerfMetricsFloat(OVRPlugin.PerfMetrics.App_CpuTime_Float);
             metrics.appCpuTime_IsValid = floatValue.HasValue;
             metrics.appCpuTime = floatValue.GetValueOrDefault();

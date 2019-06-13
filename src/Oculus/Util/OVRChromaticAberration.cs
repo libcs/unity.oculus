@@ -26,7 +26,7 @@ public class OVRChromaticAberration : MonoBehaviour
     /// </summary>
     public OVRInput.RawButton toggleButton = OVRInput.RawButton.X;
 
-    private bool chromatic = false;
+    bool chromatic = false;
 
     void Start()
     {
@@ -47,5 +47,4 @@ public class OVRChromaticAberration : MonoBehaviour
             OVRManager.instance.chromatic = chromatic;
         }
     }
-
 }

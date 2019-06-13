@@ -32,23 +32,17 @@ public class OVRGrabber : MonoBehaviour
     // Note that MovePosition is required for proper physics simulation. If you set this to true, you can
     // easily observe broken physics simulation by, for example, moving the bottom cube of a stacked
     // tower and noting a complete loss of friction.
-    [SerializeField]
-    protected bool m_parentHeldObject = false;
+    [SerializeField] protected bool m_parentHeldObject = false;
 
     // Child/attached transforms of the grabber, indicating where to snap held objects to (if you snap them).
     // Also used for ranking grab targets in case of multiple candidates.
-    [SerializeField]
-    protected Transform m_gripTransform = null;
+    [SerializeField] protected Transform m_gripTransform = null;
     // Child/attached Colliders to detect candidate grabbable objects.
-    [SerializeField]
-    protected Collider[] m_grabVolumes = null;
+    [SerializeField] protected Collider[] m_grabVolumes = null;
 
     // Should be OVRInput.Controller.LTouch or OVRInput.Controller.RTouch.
-    [SerializeField]
-    protected OVRInput.Controller m_controller;
-
-    [SerializeField]
-    protected Transform m_parentTransform;
+    [SerializeField] protected OVRInput.Controller m_controller;
+    [SerializeField] protected Transform m_parentTransform;
 
     protected bool m_grabVolumeEnabled = true;
     protected Vector3 m_lastPos;
@@ -65,34 +59,22 @@ public class OVRGrabber : MonoBehaviour
     /// <summary>
     /// The currently grabbed object.
     /// </summary>
-    public OVRGrabbable grabbedObject
-    {
-        get { return m_grabbedObj; }
-    }
+    public OVRGrabbable grabbedObject => m_grabbedObj;
 
     public void ForceRelease(OVRGrabbable grabbable)
     {
-        bool canRelease = (
-            (m_grabbedObj != null) &&
-            (m_grabbedObj == grabbable)
-        );
-        if (canRelease)
-        {
+        if (m_grabbedObj != null && m_grabbedObj == grabbable)
             GrabEnd();
-        }
     }
 
     protected virtual void Awake()
     {
         m_anchorOffsetPosition = transform.localPosition;
         m_anchorOffsetRotation = transform.localRotation;
-
         // If we are being used with an OVRCameraRig, let it drive input updates, which may come from Update or FixedUpdate.
-
         OVRCameraRig rig = null;
         if (transform.parent != null && transform.parent.parent != null)
             rig = transform.parent.parent.GetComponent<OVRCameraRig>();
-
         if (rig != null)
         {
             rig.UpdatedAnchors += (r) => { OnUpdatedAnchors(); };
@@ -107,9 +89,7 @@ public class OVRGrabber : MonoBehaviour
         if (m_parentTransform == null)
         {
             if (gameObject.transform.parent != null)
-            {
                 m_parentTransform = gameObject.transform.parent.transform;
-            }
             else
             {
                 m_parentTransform = new GameObject().transform;
@@ -130,103 +110,75 @@ public class OVRGrabber : MonoBehaviour
     // your hands or held objects, you may wish to switch to parenting.
     void OnUpdatedAnchors()
     {
-        Vector3 handPos = OVRInput.GetLocalControllerPosition(m_controller);
-        Quaternion handRot = OVRInput.GetLocalControllerRotation(m_controller);
-        Vector3 destPos = m_parentTransform.TransformPoint(m_anchorOffsetPosition + handPos);
-        Quaternion destRot = m_parentTransform.rotation * handRot * m_anchorOffsetRotation;
+        var handPos = OVRInput.GetLocalControllerPosition(m_controller);
+        var handRot = OVRInput.GetLocalControllerRotation(m_controller);
+        var destPos = m_parentTransform.TransformPoint(m_anchorOffsetPosition + handPos);
+        var destRot = m_parentTransform.rotation * handRot * m_anchorOffsetRotation;
         GetComponent<Rigidbody>().MovePosition(destPos);
         GetComponent<Rigidbody>().MoveRotation(destRot);
-
         if (!m_parentHeldObject)
-        {
             MoveGrabbedObject(destPos, destRot);
-        }
         m_lastPos = transform.position;
         m_lastRot = transform.rotation;
-
-        float prevFlex = m_prevFlex;
+        var prevFlex = m_prevFlex;
         // Update values from inputs
         m_prevFlex = OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger, m_controller);
-
         CheckForGrabOrRelease(prevFlex);
     }
 
     void OnDestroy()
     {
         if (m_grabbedObj != null)
-        {
             GrabEnd();
-        }
     }
 
     void OnTriggerEnter(Collider otherCollider)
     {
         // Get the grab trigger
-        OVRGrabbable grabbable = otherCollider.GetComponent<OVRGrabbable>() ?? otherCollider.GetComponentInParent<OVRGrabbable>();
-        if (grabbable == null) return;
-
+        var grabbable = otherCollider.GetComponent<OVRGrabbable>() ?? otherCollider.GetComponentInParent<OVRGrabbable>();
+        if (grabbable == null)
+            return;
         // Add the grabbable
-        int refCount = 0;
-        m_grabCandidates.TryGetValue(grabbable, out refCount);
+        m_grabCandidates.TryGetValue(grabbable, out var refCount);
         m_grabCandidates[grabbable] = refCount + 1;
     }
 
     void OnTriggerExit(Collider otherCollider)
     {
-        OVRGrabbable grabbable = otherCollider.GetComponent<OVRGrabbable>() ?? otherCollider.GetComponentInParent<OVRGrabbable>();
-        if (grabbable == null) return;
-
-        // Remove the grabbable
-        int refCount = 0;
-        bool found = m_grabCandidates.TryGetValue(grabbable, out refCount);
-        if (!found)
-        {
+        var grabbable = otherCollider.GetComponent<OVRGrabbable>() ?? otherCollider.GetComponentInParent<OVRGrabbable>();
+        if (grabbable == null)
             return;
-        }
-
-        if (refCount > 1)
-        {
-            m_grabCandidates[grabbable] = refCount - 1;
-        }
-        else
-        {
-            m_grabCandidates.Remove(grabbable);
-        }
+        // Remove the grabbable
+        var found = m_grabCandidates.TryGetValue(grabbable, out var refCount);
+        if (!found)
+            return;
+        if (refCount > 1) m_grabCandidates[grabbable] = refCount - 1;
+        else m_grabCandidates.Remove(grabbable);
     }
 
     protected void CheckForGrabOrRelease(float prevFlex)
     {
-        if ((m_prevFlex >= grabBegin) && (prevFlex < grabBegin))
-        {
-            GrabBegin();
-        }
-        else if ((m_prevFlex <= grabEnd) && (prevFlex > grabEnd))
-        {
-            GrabEnd();
-        }
+        if (m_prevFlex >= grabBegin && prevFlex < grabBegin) GrabBegin();
+        else if (m_prevFlex <= grabEnd && prevFlex > grabEnd) GrabEnd();
     }
 
     protected virtual void GrabBegin()
     {
-        float closestMagSq = float.MaxValue;
+        var closestMagSq = float.MaxValue;
         OVRGrabbable closestGrabbable = null;
         Collider closestGrabbableCollider = null;
-
         // Iterate grab candidates and find the closest grabbable candidate
         foreach (OVRGrabbable grabbable in m_grabCandidates.Keys)
         {
-            bool canGrab = !(grabbable.isGrabbed && !grabbable.allowOffhandGrab);
+            var canGrab = !(grabbable.isGrabbed && !grabbable.allowOffhandGrab);
             if (!canGrab)
-            {
                 continue;
-            }
-
-            for (int j = 0; j < grabbable.grabPoints.Length; ++j)
+            for (var j = 0; j < grabbable.grabPoints.Length; ++j)
             {
-                Collider grabbableCollider = grabbable.grabPoints[j];
+                var grabbableCollider = grabbable.grabPoints[j];
                 // Store the closest grabbable
-                Vector3 closestPointOnBounds = grabbableCollider.ClosestPointOnBounds(m_gripTransform.position);
-                float grabbableMagSq = (m_gripTransform.position - closestPointOnBounds).sqrMagnitude;
+                var closestPointOnBounds = grabbableCollider.ClosestPointOnBounds(m_gripTransform.position);
+                var grabbableMagSq = (m_gripTransform.position - closestPointOnBounds).sqrMagnitude;
                 if (grabbableMagSq < closestMagSq)
                 {
                     closestMagSq = grabbableMagSq;
@@ -242,30 +194,25 @@ public class OVRGrabber : MonoBehaviour
         if (closestGrabbable != null)
         {
             if (closestGrabbable.isGrabbed)
-            {
                 closestGrabbable.grabbedBy.OffhandGrabbed(closestGrabbable);
-            }
-
             m_grabbedObj = closestGrabbable;
             m_grabbedObj.GrabBegin(this, closestGrabbableCollider);
-
             m_lastPos = transform.position;
             m_lastRot = transform.rotation;
-
             // Set up offsets for grabbed object desired position relative to hand.
             if (m_grabbedObj.snapPosition)
             {
                 m_grabbedObjectPosOff = m_gripTransform.localPosition;
                 if (m_grabbedObj.snapOffset)
                 {
-                    Vector3 snapOffset = m_grabbedObj.snapOffset.position;
+                    var snapOffset = m_grabbedObj.snapOffset.position;
                     if (m_controller == OVRInput.Controller.LTouch) snapOffset.x = -snapOffset.x;
                     m_grabbedObjectPosOff += snapOffset;
                 }
             }
             else
             {
-                Vector3 relPos = m_grabbedObj.transform.position - transform.position;
+                var relPos = m_grabbedObj.transform.position - transform.position;
                 relPos = Quaternion.Inverse(transform.rotation) * relPos;
                 m_grabbedObjectPosOff = relPos;
             }
@@ -274,38 +221,27 @@ public class OVRGrabber : MonoBehaviour
             {
                 m_grabbedObjectRotOff = m_gripTransform.localRotation;
                 if (m_grabbedObj.snapOffset)
-                {
                     m_grabbedObjectRotOff = m_grabbedObj.snapOffset.rotation * m_grabbedObjectRotOff;
-                }
             }
             else
-            {
-                Quaternion relOri = Quaternion.Inverse(transform.rotation) * m_grabbedObj.transform.rotation;
-                m_grabbedObjectRotOff = relOri;
-            }
+                m_grabbedObjectRotOff = Quaternion.Inverse(transform.rotation) * m_grabbedObj.transform.rotation;
 
             // Note: force teleport on grab, to avoid high-speed travel to dest which hits a lot of other objects at high
             // speed and sends them flying. The grabbed object may still teleport inside of other objects, but fixing that
             // is beyond the scope of this demo.
             MoveGrabbedObject(m_lastPos, m_lastRot, true);
             if (m_parentHeldObject)
-            {
                 m_grabbedObj.transform.parent = transform;
-            }
         }
     }
 
     protected virtual void MoveGrabbedObject(Vector3 pos, Quaternion rot, bool forceTeleport = false)
     {
         if (m_grabbedObj == null)
-        {
             return;
-        }
-
-        Rigidbody grabbedRigidbody = m_grabbedObj.grabbedRigidbody;
-        Vector3 grabbablePosition = pos + rot * m_grabbedObjectPosOff;
-        Quaternion grabbableRotation = rot * m_grabbedObjectRotOff;
-
+        var grabbedRigidbody = m_grabbedObj.grabbedRigidbody;
+        var grabbablePosition = pos + rot * m_grabbedObjectPosOff;
+        var grabbableRotation = rot * m_grabbedObjectRotOff;
         if (forceTeleport)
         {
             grabbedRigidbody.transform.position = grabbablePosition;
@@ -322,17 +258,14 @@ public class OVRGrabber : MonoBehaviour
     {
         if (m_grabbedObj != null)
         {
-            OVRPose localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) };
-            OVRPose offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation };
+            var localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) };
+            var offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation };
             localPose = localPose * offsetPose;
-
-            OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
-            Vector3 linearVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller);
-            Vector3 angularVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller);
-
+            var trackingSpace = transform.ToOVRPose() * localPose.Inverse();
+            var linearVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller);
+            var angularVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller);
             GrabbableRelease(linearVelocity, angularVelocity);
         }
-
         // Re-enable grab volumes to allow overlap events
         GrabVolumeEnable(true);
     }
@@ -347,28 +280,17 @@ public class OVRGrabber : MonoBehaviour
     protected virtual void GrabVolumeEnable(bool enabled)
     {
         if (m_grabVolumeEnabled == enabled)
-        {
             return;
-        }
-
         m_grabVolumeEnabled = enabled;
-        for (int i = 0; i < m_grabVolumes.Length; ++i)
-        {
-            Collider grabVolume = m_grabVolumes[i];
-            grabVolume.enabled = m_grabVolumeEnabled;
-        }
-
+        for (var i = 0; i < m_grabVolumes.Length; ++i)
+            m_grabVolumes[i].enabled = m_grabVolumeEnabled;
         if (!m_grabVolumeEnabled)
-        {
             m_grabCandidates.Clear();
-        }
     }
 
     protected virtual void OffhandGrabbed(OVRGrabbable grabbable)
     {
         if (m_grabbedObj == grabbable)
-        {
             GrabbableRelease(Vector3.zero, Vector3.zero);
-        }
     }
 }

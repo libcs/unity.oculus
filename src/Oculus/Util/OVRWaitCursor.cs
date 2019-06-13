@@ -26,8 +26,5 @@ public class OVRWaitCursor : MonoBehaviour
     /// <summary>
     /// Auto rotates the attached cursor.
     /// </summary>
-    void Update()
-    {
-        transform.Rotate(rotateSpeeds * Time.smoothDeltaTime);
-    }
+    void Update() => transform.Rotate(rotateSpeeds * Time.smoothDeltaTime);
 }

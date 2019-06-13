@@ -14,10 +14,6 @@ ANY KIND, either express or implied. See the License for the specific language g
 permissions and limitations under the License.
 ************************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Assets.OVR.Scripts
 {
@@ -37,8 +33,7 @@ namespace Assets.OVR.Scripts
         public float value;
         public float min;
         public float max;
-        public RangedRecord(string cat, string msg, float val, float minVal, float maxVal)
-            : base(cat, msg)
+        public RangedRecord(string cat, string msg, float val, float minVal, float maxVal) : base(cat, msg)
         {
             value = val;
             min = minVal;
@@ -56,8 +51,7 @@ namespace Assets.OVR.Scripts
         public bool editModeRequired;
         public bool complete;
 
-        public FixRecord(string cat, string msg, FixMethodDelegate fix, UnityEngine.Object target, bool editRequired, string[] buttons)
-            : base(cat, msg)
+        public FixRecord(string cat, string msg, FixMethodDelegate fix, UnityEngine.Object target, bool editRequired, string[] buttons) : base(cat, msg)
         {
             buttonNames = buttons;
             fixMethod = fix;

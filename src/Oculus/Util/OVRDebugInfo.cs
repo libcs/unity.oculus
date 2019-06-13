@@ -15,8 +15,6 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
 
 //-------------------------------------------------------------------------------------
 /// <summary>
@@ -79,24 +77,20 @@ public class OVRDebugInfo : MonoBehaviour
     bool showVRVars = false;
 
     #region MonoBehaviour handler
-
     /// <summary>
     /// Initialization
     /// </summary>
     void Awake()
     {
         // Create canvas for using new GUI
-        debugUIManager = new GameObject();
-        debugUIManager.name = "DebugUIManager";
+        debugUIManager = new GameObject { name = "DebugUIManager" };
         debugUIManager.transform.parent = GameObject.Find("LeftEyeAnchor").transform;
-
-        RectTransform rectTransform = debugUIManager.AddComponent<RectTransform>();
+        var rectTransform = debugUIManager.AddComponent<RectTransform>();
         rectTransform.sizeDelta = new Vector2(100f, 100f);
         rectTransform.localScale = new Vector3(0.001f, 0.001f, 0.001f);
         rectTransform.localPosition = new Vector3(0.01f, 0.17f, 0.53f);
         rectTransform.localEulerAngles = Vector3.zero;
-
-        Canvas canvas = debugUIManager.AddComponent<Canvas>();
+        var canvas = debugUIManager.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.pixelPerfect = false;
     }
@@ -107,18 +101,13 @@ public class OVRDebugInfo : MonoBehaviour
     void Update()
     {
         if (initUIComponent && !isInited)
-        {
             InitUIComponents();
-        }
-
         if (Input.GetKeyDown(KeyCode.Space) && riftPresentTimeout < 0.0f)
         {
             initUIComponent = true;
             showVRVars ^= true;
         }
-
         UpdateDeviceDetection();
-
         // Presenting VR variables
         if (showVRVars)
         {
@@ -127,18 +116,13 @@ public class OVRDebugInfo : MonoBehaviour
             UpdateStrings();
         }
         else
-        {
             debugUIManager.SetActive(false);
-        }
     }
 
     /// <summary>
     /// Initialize isInited value on OnDestroy
     /// </summary>
-    void OnDestroy()
-    {
-        isInited = false;
-    }
+    void OnDestroy() => isInited = false;
     #endregion
 
     #region Private Functions
@@ -147,62 +131,29 @@ public class OVRDebugInfo : MonoBehaviour
     /// </summary>
     void InitUIComponents()
     {
-        float posY = 0.0f;
-        int fontSize = 20;
-
-        debugUIObject = new GameObject();
-        debugUIObject.name = "DebugInfo";
+        var posY = 0.0f;
+        var fontSize = 20;
+        debugUIObject = new GameObject { name = "DebugInfo" };
         debugUIObject.transform.parent = GameObject.Find("DebugUIManager").transform;
         debugUIObject.transform.localPosition = new Vector3(0.0f, 100.0f, 0.0f);
         debugUIObject.transform.localEulerAngles = Vector3.zero;
         debugUIObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-
         // Print out for FPS
-        if (!string.IsNullOrEmpty(strFPS))
-        {
-            fps = VariableObjectManager(fps, "FPS", posY -= offsetY, strFPS, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strFPS)) fps = VariableObjectManager(fps, "FPS", posY -= offsetY, strFPS, fontSize);
         // Print out for IPD
-        if (!string.IsNullOrEmpty(strIPD))
-        {
-            ipd = VariableObjectManager(ipd, "IPD", posY -= offsetY, strIPD, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strIPD)) ipd = VariableObjectManager(ipd, "IPD", posY -= offsetY, strIPD, fontSize);
         // Print out for FOV
-        if (!string.IsNullOrEmpty(strFOV))
-        {
-            fov = VariableObjectManager(fov, "FOV", posY -= offsetY, strFOV, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strFOV)) fov = VariableObjectManager(fov, "FOV", posY -= offsetY, strFOV, fontSize);
         // Print out for Height
-        if (!string.IsNullOrEmpty(strHeight))
-        {
-            height = VariableObjectManager(height, "Height", posY -= offsetY, strHeight, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strHeight)) height = VariableObjectManager(height, "Height", posY -= offsetY, strHeight, fontSize);
         // Print out for Depth
-        if (!string.IsNullOrEmpty(strDepth))
-        {
-            depth = VariableObjectManager(depth, "Depth", posY -= offsetY, strDepth, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strDepth)) depth = VariableObjectManager(depth, "Depth", posY -= offsetY, strDepth, fontSize);
         // Print out for Resoulution of Eye Texture
-        if (!string.IsNullOrEmpty(strResolutionEyeTexture))
-        {
-            resolutionEyeTexture = VariableObjectManager(resolutionEyeTexture, "Resolution", posY -= offsetY, strResolutionEyeTexture, fontSize);
-        }
-
+        if (!string.IsNullOrEmpty(strResolutionEyeTexture)) resolutionEyeTexture = VariableObjectManager(resolutionEyeTexture, "Resolution", posY -= offsetY, strResolutionEyeTexture, fontSize);
         // Print out for Latency
-        if (!string.IsNullOrEmpty(strLatencies))
-        {
-            latencies = VariableObjectManager(latencies, "Latency", posY -= offsetY, strLatencies, 17);
-            posY = 0.0f;
-        }
-
+        if (!string.IsNullOrEmpty(strLatencies)) { latencies = VariableObjectManager(latencies, "Latency", posY -= offsetY, strLatencies, 17); posY = 0.0f; }
         initUIComponent = false;
         isInited = true;
-
     }
 
     /// <summary>
@@ -226,24 +177,17 @@ public class OVRDebugInfo : MonoBehaviour
     {
         if (debugUIObject == null)
             return;
-
-        if (!string.IsNullOrEmpty(strFPS))
-            fps.GetComponentInChildren<Text>().text = strFPS;
-        if (!string.IsNullOrEmpty(strIPD))
-            ipd.GetComponentInChildren<Text>().text = strIPD;
-        if (!string.IsNullOrEmpty(strFOV))
-            fov.GetComponentInChildren<Text>().text = strFOV;
-        if (!string.IsNullOrEmpty(strResolutionEyeTexture))
-            resolutionEyeTexture.GetComponentInChildren<Text>().text = strResolutionEyeTexture;
+        if (!string.IsNullOrEmpty(strFPS)) fps.GetComponentInChildren<Text>().text = strFPS;
+        if (!string.IsNullOrEmpty(strIPD)) ipd.GetComponentInChildren<Text>().text = strIPD;
+        if (!string.IsNullOrEmpty(strFOV)) fov.GetComponentInChildren<Text>().text = strFOV;
+        if (!string.IsNullOrEmpty(strResolutionEyeTexture)) resolutionEyeTexture.GetComponentInChildren<Text>().text = strResolutionEyeTexture;
         if (!string.IsNullOrEmpty(strLatencies))
         {
             latencies.GetComponentInChildren<Text>().text = strLatencies;
             latencies.GetComponentInChildren<Text>().fontSize = 14;
         }
-        if (!string.IsNullOrEmpty(strHeight))
-            height.GetComponentInChildren<Text>().text = strHeight;
-        if (!string.IsNullOrEmpty(strDepth))
-            depth.GetComponentInChildren<Text>().text = strDepth;
+        if (!string.IsNullOrEmpty(strHeight)) height.GetComponentInChildren<Text>().text = strHeight;
+        if (!string.IsNullOrEmpty(strDepth)) depth.GetComponentInChildren<Text>().text = strDepth;
     }
 
     /// <summary>
@@ -258,8 +202,7 @@ public class OVRDebugInfo : MonoBehaviour
         rectTransform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
         rectTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
         rectTransform.localEulerAngles = Vector3.zero;
-
-        Text text = riftPresent.GetComponentInChildren<Text>();
+        var text = riftPresent.GetComponentInChildren<Text>();
         text.text = strRiftPresent;
         text.fontSize = 20;
     }
@@ -270,9 +213,7 @@ public class OVRDebugInfo : MonoBehaviour
     void UpdateDeviceDetection()
     {
         if (riftPresentTimeout >= 0.0f)
-        {
             riftPresentTimeout -= Time.deltaTime;
-        }
     }
 
     /// <summary>
@@ -284,17 +225,13 @@ public class OVRDebugInfo : MonoBehaviour
         gameObject = ComponentComposition(gameObject);
         gameObject.name = name;
         gameObject.transform.SetParent(debugUIObject.transform);
-
-        RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+        var rectTransform = gameObject.GetComponent<RectTransform>();
         rectTransform.localPosition = new Vector3(0.0f, posY -= offsetY, 0.0f);
-
-        Text text = gameObject.GetComponentInChildren<Text>();
+        var text = gameObject.GetComponentInChildren<Text>();
         text.text = str;
         text.fontSize = fontSize;
         gameObject.transform.localEulerAngles = Vector3.zero;
-
         rectTransform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-
         return gameObject;
     }
 
@@ -310,7 +247,6 @@ public class OVRDebugInfo : MonoBehaviour
         GO.AddComponent<Image>();
         GO.GetComponent<RectTransform>().sizeDelta = new Vector2(350f, 50f);
         GO.GetComponent<Image>().color = new Color(7f / 255f, 45f / 255f, 71f / 255f, 200f / 255f);
-
         texts = new GameObject();
         texts.AddComponent<RectTransform>();
         texts.AddComponent<CanvasRenderer>();
@@ -318,10 +254,8 @@ public class OVRDebugInfo : MonoBehaviour
         texts.GetComponent<RectTransform>().sizeDelta = new Vector2(350f, 50f);
         texts.GetComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
         texts.GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-
         texts.transform.SetParent(GO.transform);
         texts.name = "TextBox";
-
         return GO;
     }
     #endregion
@@ -330,62 +264,34 @@ public class OVRDebugInfo : MonoBehaviour
     /// <summary>
     /// Updates the IPD.
     /// </summary>
-    void UpdateIPD()
-    {
-        strIPD = System.String.Format("IPD (mm): {0:F4}", OVRManager.profile.ipd * 1000.0f);
-    }
+    void UpdateIPD() => strIPD = string.Format("IPD (mm): {0:F4}", OVRManager.profile.ipd * 1000.0f);
 
     /// <summary>
     /// Updates the eye height offset.
     /// </summary>
-    void UpdateEyeHeightOffset()
-    {
-        float eyeHeight = OVRManager.profile.eyeHeight;
-        strHeight = System.String.Format("Eye Height (m): {0:F3}", eyeHeight);
-    }
+    void UpdateEyeHeightOffset() => strHeight = string.Format("Eye Height (m): {0:F3}", OVRManager.profile.eyeHeight);
 
     /// <summary>
     /// Updates the eye depth offset.
     /// </summary>
-    void UpdateEyeDepthOffset()
-    {
-        float eyeDepth = OVRManager.profile.eyeDepth;
-        strDepth = System.String.Format("Eye Depth (m): {0:F3}", eyeDepth);
-    }
+    void UpdateEyeDepthOffset() => strDepth = string.Format("Eye Depth (m): {0:F3}", OVRManager.profile.eyeDepth);
 
     /// <summary>
     /// Updates the FOV.
     /// </summary>
-    void UpdateFOV()
-    {
-#if UNITY_2017_2_OR_NEWER
-        OVRDisplay.EyeRenderDesc eyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.LeftEye);
-#else
-        OVRDisplay.EyeRenderDesc eyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.VR.VRNode.LeftEye);
-#endif
-        strFOV = System.String.Format("FOV (deg): {0:F3}", eyeDesc.fov.y);
-    }
+    void UpdateFOV() => strFOV = string.Format("FOV (deg): {0:F3}", OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.LeftEye).fov.y);
 
     /// <summary>
     /// Updates resolution of eye texture
     /// </summary>
     void UpdateResolutionEyeTexture()
     {
-#if UNITY_2017_2_OR_NEWER
-		OVRDisplay.EyeRenderDesc leftEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.LeftEye);
-		OVRDisplay.EyeRenderDesc rightEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.RightEye);
-
-		float scale = UnityEngine.XR.XRSettings.renderViewportScale;
-#else
-        OVRDisplay.EyeRenderDesc leftEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.VR.VRNode.LeftEye);
-        OVRDisplay.EyeRenderDesc rightEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.VR.VRNode.RightEye);
-
-        float scale = UnityEngine.VR.VRSettings.renderViewportScale;
-#endif
-        float w = (int)(scale * (float)(leftEyeDesc.resolution.x + rightEyeDesc.resolution.x));
-        float h = (int)(scale * (float)Mathf.Max(leftEyeDesc.resolution.y, rightEyeDesc.resolution.y));
-
-        strResolutionEyeTexture = System.String.Format("Resolution : {0} x {1}", w, h);
+        var leftEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.LeftEye);
+        var rightEyeDesc = OVRManager.display.GetEyeRenderDesc(UnityEngine.XR.XRNode.RightEye);
+        var scale = UnityEngine.XR.XRSettings.renderViewportScale;
+        var w = (int)(scale * (leftEyeDesc.resolution.x + rightEyeDesc.resolution.x));
+        var h = (int)(scale * Mathf.Max(leftEyeDesc.resolution.y, rightEyeDesc.resolution.y));
+        strResolutionEyeTexture = string.Format("Resolution : {0} x {1}", w, h);
     }
 
     /// <summary>
@@ -393,18 +299,18 @@ public class OVRDebugInfo : MonoBehaviour
     /// </summary>
     void UpdateLatencyValues()
     {
-#if !UNITY_ANDROID || UNITY_EDITOR
-        OVRDisplay.LatencyData latency = OVRManager.display.latency;
-        if (latency.render < 0.000001f && latency.timeWarp < 0.000001f && latency.postPresent < 0.000001f)
-            strLatencies = System.String.Format("Latency values are not available.");
-        else
-            strLatencies = System.String.Format("Render: {0:F3} TimeWarp: {1:F3} Post-Present: {2:F3}\nRender Error: {3:F3} TimeWarp Error: {4:F3}",
-                latency.render,
-                latency.timeWarp,
-                latency.postPresent,
-                latency.renderError,
-                latency.timeWarpError);
-#endif
+        if (Application.platform != RuntimePlatform.Android || Application.isEditor)
+        {
+            var latency = OVRManager.display.latency;
+            strLatencies = latency.render < 0.000001f && latency.timeWarp < 0.000001f && latency.postPresent < 0.000001f
+                ? string.Format("Latency values are not available.")
+                : string.Format("Render: {0:F3} TimeWarp: {1:F3} Post-Present: {2:F3}\nRender Error: {3:F3} TimeWarp Error: {4:F3}",
+                    latency.render,
+                    latency.timeWarp,
+                    latency.postPresent,
+                    latency.renderError,
+                    latency.timeWarpError);
+        }
     }
 
     /// <summary>
@@ -415,15 +321,12 @@ public class OVRDebugInfo : MonoBehaviour
         timeLeft -= Time.unscaledDeltaTime;
         accum += Time.unscaledDeltaTime;
         ++frames;
-
         // Interval ended - update GUI text and start new interval
         if (timeLeft <= 0.0)
         {
             // display two fractional digits (f2 format)
-            float fps = frames / accum;
-
-            strFPS = System.String.Format("FPS: {0:F2}", fps);
-
+            var fps = frames / accum;
+            strFPS = string.Format("FPS: {0:F2}", fps);
             timeLeft += updateInterval;
             accum = 0.0f;
             frames = 0;

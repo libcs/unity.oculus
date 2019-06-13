@@ -22,11 +22,9 @@ using System.Collections; // required for Coroutines
 /// </summary>
 public class OVRScreenFade : MonoBehaviour
 {
-    [Tooltip("Fade duration")]
-    public float fadeTime = 2.0f;
+    [Tooltip("Fade duration")] public float fadeTime = 2.0f;
 
-    [Tooltip("Screen color at maximum fade")]
-    public Color fadeColor = new Color(0.01f, 0.01f, 0.01f, 1.0f);
+    [Tooltip("Screen color at maximum fade")] public Color fadeColor = new Color(0.01f, 0.01f, 0.01f, 1.0f);
 
     public bool fadeOnStart = true;
 
@@ -35,12 +33,12 @@ public class OVRScreenFade : MonoBehaviour
     /// </summary>
     public int renderQueue = 5000;
 
-    private float uiFadeAlpha = 0;
+    float uiFadeAlpha = 0;
 
-    private MeshRenderer fadeRenderer;
-    private MeshFilter fadeMesh;
-    private Material fadeMaterial = null;
-    private bool isFading = false;
+    MeshRenderer fadeRenderer;
+    MeshFilter fadeMesh;
+    Material fadeMaterial = null;
+    bool isFading = false;
 
     public float currentAlpha { get; private set; }
 
@@ -50,72 +48,49 @@ public class OVRScreenFade : MonoBehaviour
         fadeMaterial = new Material(Shader.Find("Oculus/Unlit Transparent Color"));
         fadeMesh = gameObject.AddComponent<MeshFilter>();
         fadeRenderer = gameObject.AddComponent<MeshRenderer>();
-
         var mesh = new Mesh();
         fadeMesh.mesh = mesh;
-
-        Vector3[] vertices = new Vector3[4];
-
-        float width = 2f;
-        float height = 2f;
-        float depth = 1f;
-
+        var vertices = new Vector3[4];
+        var width = 2f;
+        var height = 2f;
+        var depth = 1f;
         vertices[0] = new Vector3(-width, -height, depth);
         vertices[1] = new Vector3(width, -height, depth);
         vertices[2] = new Vector3(-width, height, depth);
         vertices[3] = new Vector3(width, height, depth);
-
         mesh.vertices = vertices;
-
-        int[] tri = new int[6];
-
+        var tri = new int[6];
         tri[0] = 0;
         tri[1] = 2;
         tri[2] = 1;
-
         tri[3] = 2;
         tri[4] = 3;
         tri[5] = 1;
-
         mesh.triangles = tri;
-
-        Vector3[] normals = new Vector3[4];
-
+        var normals = new Vector3[4];
         normals[0] = -Vector3.forward;
         normals[1] = -Vector3.forward;
         normals[2] = -Vector3.forward;
         normals[3] = -Vector3.forward;
-
         mesh.normals = normals;
-
-        Vector2[] uv = new Vector2[4];
-
+        var uv = new Vector2[4];
         uv[0] = new Vector2(0, 0);
         uv[1] = new Vector2(1, 0);
         uv[2] = new Vector2(0, 1);
         uv[3] = new Vector2(1, 1);
-
         mesh.uv = uv;
-
         SetFadeLevel(0);
     }
 
     /// <summary>
     /// Start a fade out
     /// </summary>
-    public void FadeOut()
-    {
-        StartCoroutine(Fade(0, 1));
-    }
-
+    public void FadeOut() => StartCoroutine(Fade(0, 1));
 
     /// <summary>
     /// Starts a fade in when a new level is loaded
     /// </summary>
-    void OnLevelFinishedLoading(int level)
-    {
-        StartCoroutine(Fade(1, 0));
-    }
+    void OnLevelFinishedLoading(int level) => StartCoroutine(Fade(1, 0));
 
     /// <summary>
     /// Automatically starts a fade in
@@ -123,17 +98,13 @@ public class OVRScreenFade : MonoBehaviour
     void Start()
     {
         if (fadeOnStart)
-        {
             StartCoroutine(Fade(1, 0));
-        }
     }
 
     void OnEnable()
     {
         if (!fadeOnStart)
-        {
             SetFadeLevel(0);
-        }
     }
 
     /// <summary>
@@ -143,10 +114,8 @@ public class OVRScreenFade : MonoBehaviour
     {
         if (fadeRenderer != null)
             Destroy(fadeRenderer);
-
         if (fadeMaterial != null)
             Destroy(fadeMaterial);
-
         if (fadeMesh != null)
             Destroy(fadeMesh);
     }
@@ -159,6 +128,7 @@ public class OVRScreenFade : MonoBehaviour
         uiFadeAlpha = Mathf.Clamp01(level);
         SetMaterialAlpha();
     }
+
     /// <summary>
     /// Override current fade level
     /// </summary>
@@ -174,7 +144,7 @@ public class OVRScreenFade : MonoBehaviour
     /// </summary>
     IEnumerator Fade(float startAlpha, float endAlpha)
     {
-        float elapsedTime = 0.0f;
+        var elapsedTime = 0.0f;
         while (elapsedTime < fadeTime)
         {
             elapsedTime += Time.deltaTime;
@@ -188,9 +158,9 @@ public class OVRScreenFade : MonoBehaviour
     /// Update material alpha. UI fade and the current fade due to fade in/out animations (or explicit control)
     /// both affect the fade. (The max is taken)
     /// </summary>
-    private void SetMaterialAlpha()
+    void SetMaterialAlpha()
     {
-        Color color = fadeColor;
+        var color = fadeColor;
         color.a = Mathf.Max(currentAlpha, uiFadeAlpha);
         isFading = color.a > 0;
         if (fadeMaterial != null)

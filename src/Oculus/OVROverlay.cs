@@ -14,16 +14,9 @@ ANY KIND, either express or implied. See the License for the specific language g
 permissions and limitations under the License.
 ************************************************************************************/
 
-using UnityEngine;
 using System;
-using System.Collections;
 using System.Runtime.InteropServices;
-
-#if UNITY_2017_2_OR_NEWER
-using Settings = UnityEngine.XR.XRSettings;
-#else
-using Settings = UnityEngine.VR.VRSettings;
-#endif
+using UnityEngine;
 
 /// <summary>
 /// Add OVROverlay script to an object with an optional mesh primitive
@@ -32,7 +25,7 @@ using Settings = UnityEngine.VR.VRSettings;
 /// resampling of the texture.
 ///
 /// We support 3 types of Overlay shapes right now
-///		1. Quad : This is most common overlay type , you render a quad in Timewarp space.
+///		1. Quad : This is most common overlay type, you render a quad in Timewarp space.
 ///		2. Cylinder: [Mobile Only][Experimental], Display overlay as partial surface of a cylinder
 ///			* The cylinder's center will be your game object's center
 ///			* We encoded the cylinder's parameters in transform.scale,
@@ -75,7 +68,7 @@ public class OVROverlay : MonoBehaviour
         None,
         Underlay,
         Overlay,
-    };
+    }
 
     /// <summary>
     /// Specify overlay's type
@@ -101,7 +94,7 @@ public class OVROverlay : MonoBehaviour
     public Rect destRectLeft = new Rect();
     public Rect destRectRight = new Rect();
 
-    private OVRPlugin.TextureRectMatrixf textureRectMatrix = OVRPlugin.TextureRectMatrixf.zero;
+    OVRPlugin.TextureRectMatrixf textureRectMatrix = OVRPlugin.TextureRectMatrixf.zero;
 
     public bool overrideTextureRectMatrix = false;
 
@@ -145,7 +138,7 @@ public class OVROverlay : MonoBehaviour
     /// </summary>
     [Tooltip("Specify overlay's shape")]
     public OverlayShape currentOverlayShape = OverlayShape.Quad;
-    private OverlayShape prevOverlayShape = OverlayShape.Quad;
+    OverlayShape prevOverlayShape = OverlayShape.Quad;
 
     /// <summary>
     /// The left- and right-eye Textures to show in the layer.
@@ -171,24 +164,13 @@ public class OVROverlay : MonoBehaviour
     /// Use this function to set texture and texNativePtr when app is running
     /// GetNativeTexturePtr is a slow behavior, the value should be pre-cached
     /// </summary>
-#if UNITY_2017_2_OR_NEWER
-	public void OverrideOverlayTextureInfo(Texture srcTexture, IntPtr nativePtr, UnityEngine.XR.XRNode node)
-#else
-    public void OverrideOverlayTextureInfo(Texture srcTexture, IntPtr nativePtr, UnityEngine.VR.VRNode node)
-#endif
+    public void OverrideOverlayTextureInfo(Texture srcTexture, IntPtr nativePtr, UnityEngine.XR.XRNode node)
     {
-#if UNITY_2017_2_OR_NEWER
-		int index = (node == UnityEngine.XR.XRNode.RightEye) ? 1 : 0;
-#else
-        int index = (node == UnityEngine.VR.VRNode.RightEye) ? 1 : 0;
-#endif
-
+        var index = (node == UnityEngine.XR.XRNode.RightEye) ? 1 : 0;
         if (textures.Length <= index)
             return;
-
         textures[index] = srcTexture;
         texturePtrs[index] = nativePtr;
-
         isOverridePending = true;
     }
 
@@ -199,68 +181,55 @@ public class OVROverlay : MonoBehaviour
 
     #endregion
 
-    private static Material tex2DMaterial;
-    private static Material cubeMaterial;
+    static Material tex2DMaterial;
+    static Material cubeMaterial;
 
-    private OVRPlugin.LayerLayout layout
-    {
-        get
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-			if (textures.Length == 2 && textures[1] != null)
-				return OVRPlugin.LayerLayout.Stereo;
-#endif
-            return OVRPlugin.LayerLayout.Mono;
-        }
-    }
+    OVRPlugin.LayerLayout layout => Application.platform == RuntimePlatform.Android && !Application.isEditor
+        && textures.Length == 2 && textures[1] != null
+            ? OVRPlugin.LayerLayout.Stereo
+            : OVRPlugin.LayerLayout.Mono;
 
-    private struct LayerTexture
+    struct LayerTexture
     {
         public Texture appTexture;
         public IntPtr appTexturePtr;
         public Texture[] swapChain;
         public IntPtr[] swapChainPtr;
     };
-    private LayerTexture[] layerTextures;
+    LayerTexture[] layerTextures;
 
-    private OVRPlugin.LayerDesc layerDesc;
-    private int stageCount = -1;
+    OVRPlugin.LayerDesc layerDesc;
+    int stageCount = -1;
 
-    private int layerIndex = -1; // Controls the composition order based on wake-up time.
+    int layerIndex = -1; // Controls the composition order based on wake-up time.
 
-    private int layerId = 0; // The layer's internal handle in the compositor.
-    private GCHandle layerIdHandle;
-    private IntPtr layerIdPtr = IntPtr.Zero;
+    int layerId = 0; // The layer's internal handle in the compositor.
+    GCHandle layerIdHandle;
+    IntPtr layerIdPtr = IntPtr.Zero;
 
-    private int frameIndex = 0;
-    private int prevFrameIndex = -1;
+    int frameIndex = 0;
+    int prevFrameIndex = -1;
 
-    private Renderer rend;
+    Renderer rend;
 
-    private int texturesPerStage { get { return (layout == OVRPlugin.LayerLayout.Stereo) ? 2 : 1; } }
+    int texturesPerStage => (layout == OVRPlugin.LayerLayout.Stereo) ? 2 : 1;
 
-    private bool CreateLayer(int mipLevels, int sampleCount, OVRPlugin.EyeTextureFormat etFormat, int flags, OVRPlugin.Sizei size, OVRPlugin.OverlayShape shape)
+    bool CreateLayer(int mipLevels, int sampleCount, OVRPlugin.EyeTextureFormat etFormat, int flags, OVRPlugin.Sizei size, OVRPlugin.OverlayShape shape)
     {
         if (!layerIdHandle.IsAllocated || layerIdPtr == IntPtr.Zero)
         {
             layerIdHandle = GCHandle.Alloc(layerId, GCHandleType.Pinned);
             layerIdPtr = layerIdHandle.AddrOfPinnedObject();
         }
-
         if (layerIndex == -1)
-        {
-            for (int i = 0; i < maxInstances; ++i)
-            {
+            for (var i = 0; i < maxInstances; ++i)
                 if (instances[i] == null || instances[i] == this)
                 {
                     layerIndex = i;
                     instances[i] = this;
                     break;
                 }
-            }
-        }
-
-        bool needsSetup = (
+        var needsSetup =
             isOverridePending ||
             layerDesc.MipLevels != mipLevels ||
             layerDesc.SampleCount != sampleCount ||
@@ -268,30 +237,18 @@ public class OVROverlay : MonoBehaviour
             layerDesc.Layout != layout ||
             layerDesc.LayerFlags != flags ||
             !layerDesc.TextureSize.Equals(size) ||
-            layerDesc.Shape != shape);
-
+            layerDesc.Shape != shape;
         if (!needsSetup)
             return false;
-
-        OVRPlugin.LayerDesc desc = OVRPlugin.CalculateLayerDesc(shape, layout, size, mipLevels, sampleCount, etFormat, flags);
+        var desc = OVRPlugin.CalculateLayerDesc(shape, layout, size, mipLevels, sampleCount, etFormat, flags);
         OVRPlugin.EnqueueSetupLayer(desc, compositionDepth, layerIdPtr);
         layerId = (int)layerIdHandle.Target;
-
         if (layerId > 0)
         {
             layerDesc = desc;
-            if (isExternalSurface)
-            {
-                stageCount = 1;
-            }
-            else
-            {
-                stageCount = OVRPlugin.GetLayerTextureStageCount(layerId);
-            }
+            stageCount = isExternalSurface ? 1 : OVRPlugin.GetLayerTextureStageCount(layerId);
         }
-
         isOverridePending = false;
-
         return true;
     }
 
@@ -299,92 +256,64 @@ public class OVROverlay : MonoBehaviour
     {
         if (isExternalSurface)
         {
-            if (externalSurfaceObject == System.IntPtr.Zero)
+            if (externalSurfaceObject == IntPtr.Zero)
             {
                 externalSurfaceObject = OVRPlugin.GetLayerAndroidSurfaceObject(layerId);
-                if (externalSurfaceObject != System.IntPtr.Zero)
+                if (externalSurfaceObject != IntPtr.Zero)
                 {
                     Debug.LogFormat("GetLayerAndroidSurfaceObject returns {0}", externalSurfaceObject);
-                    if (externalSurfaceObjectCreated != null)
-                    {
-                        externalSurfaceObjectCreated();
-                    }
+                    externalSurfaceObjectCreated?.Invoke();
                 }
             }
             return false;
         }
-
-        bool needsCopy = false;
-
+        var needsCopy = false;
         if (stageCount <= 0)
             return false;
-
         // For newer SDKs, blit directly to the surface that will be used in compositing.
-
         if (layerTextures == null)
             layerTextures = new LayerTexture[texturesPerStage];
-
-        for (int eyeId = 0; eyeId < texturesPerStage; ++eyeId)
+        for (var eyeId = 0; eyeId < texturesPerStage; ++eyeId)
         {
             if (layerTextures[eyeId].swapChain == null)
                 layerTextures[eyeId].swapChain = new Texture[stageCount];
-
             if (layerTextures[eyeId].swapChainPtr == null)
                 layerTextures[eyeId].swapChainPtr = new IntPtr[stageCount];
-
-            for (int stage = 0; stage < stageCount; ++stage)
+            for (var stage = 0; stage < stageCount; ++stage)
             {
-                Texture sc = layerTextures[eyeId].swapChain[stage];
-                IntPtr scPtr = layerTextures[eyeId].swapChainPtr[stage];
-
+                var sc = layerTextures[eyeId].swapChain[stage];
+                var scPtr = layerTextures[eyeId].swapChainPtr[stage];
                 if (sc != null && scPtr != IntPtr.Zero)
                     continue;
-
                 if (scPtr == IntPtr.Zero)
                     scPtr = OVRPlugin.GetLayerTexture(layerId, stage, (OVRPlugin.Eye)eyeId);
-
                 if (scPtr == IntPtr.Zero)
                     continue;
-
-                var txFormat = (isHdr) ? TextureFormat.RGBAHalf : TextureFormat.RGBA32;
-
+                var txFormat = isHdr ? TextureFormat.RGBAHalf : TextureFormat.RGBA32;
                 if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
                     sc = Texture2D.CreateExternalTexture(size.w, size.h, txFormat, useMipmaps, true, scPtr);
-#if UNITY_2017_1_OR_NEWER
-				else
-					sc = Cubemap.CreateExternalTexture(size.w, txFormat, useMipmaps, scPtr);
-#endif
-
+                else
+                    sc = Cubemap.CreateExternalTexture(size.w, txFormat, useMipmaps, scPtr);
                 layerTextures[eyeId].swapChain[stage] = sc;
                 layerTextures[eyeId].swapChainPtr[stage] = scPtr;
-
                 needsCopy = true;
             }
         }
-
         return needsCopy;
     }
 
-    private void DestroyLayerTextures()
+    void DestroyLayerTextures()
     {
         if (isExternalSurface)
-        {
             return;
-        }
-
-        for (int eyeId = 0; layerTextures != null && eyeId < texturesPerStage; ++eyeId)
-        {
+        for (var eyeId = 0; layerTextures != null && eyeId < texturesPerStage; ++eyeId)
             if (layerTextures[eyeId].swapChain != null)
-            {
-                for (int stage = 0; stage < stageCount; ++stage)
+                for (var stage = 0; stage < stageCount; ++stage)
                     DestroyImmediate(layerTextures[eyeId].swapChain[stage]);
-            }
-        }
-
         layerTextures = null;
     }
 
-    private void DestroyLayer()
+    void DestroyLayer()
     {
         if (layerIndex != -1)
         {
@@ -393,7 +322,6 @@ public class OVROverlay : MonoBehaviour
             instances[layerIndex] = null;
             layerIndex = -1;
         }
-
         if (layerIdPtr != IntPtr.Zero)
         {
             OVRPlugin.EnqueueDestroyLayer(layerIdPtr);
@@ -401,9 +329,7 @@ public class OVROverlay : MonoBehaviour
             layerIdHandle.Free();
             layerId = 0;
         }
-
         layerDesc = new OVRPlugin.LayerDesc();
-
         frameIndex = 0;
         prevFrameIndex = -1;
     }
@@ -424,11 +350,11 @@ public class OVROverlay : MonoBehaviour
     {
         textureRectMatrix.leftRect = new Rect(srcRectLeft);
         textureRectMatrix.rightRect = new Rect(srcRectRight);
-        float leftWidthFactor = srcRectLeft.width / destRectLeft.width;
-        float leftHeightFactor = srcRectLeft.height / destRectLeft.height;
+        var leftWidthFactor = srcRectLeft.width / destRectLeft.width;
+        var leftHeightFactor = srcRectLeft.height / destRectLeft.height;
         textureRectMatrix.leftScaleBias = new Vector4(leftWidthFactor, leftHeightFactor, srcRectLeft.x - destRectLeft.x * leftWidthFactor, srcRectLeft.y - destRectLeft.y * leftHeightFactor);
-        float rightWidthFactor = srcRectRight.width / destRectRight.width;
-        float rightHeightFactor = srcRectRight.height / destRectRight.height;
+        var rightWidthFactor = srcRectRight.width / destRectRight.width;
+        var rightHeightFactor = srcRectRight.height / destRectRight.height;
         textureRectMatrix.rightScaleBias = new Vector4(rightWidthFactor, rightHeightFactor, srcRectRight.x - destRectRight.x * rightWidthFactor, srcRectRight.y - destRectRight.y * rightHeightFactor);
     }
 
@@ -438,14 +364,11 @@ public class OVROverlay : MonoBehaviour
         colorOffset = offset;
     }
 
-    private bool LatchLayerTextures()
+    bool LatchLayerTextures()
     {
         if (isExternalSurface)
-        {
             return true;
-        }
-
-        for (int i = 0; i < texturesPerStage; ++i)
+        for (var i = 0; i < texturesPerStage; ++i)
         {
             if (textures[i] != layerTextures[i].appTexture || layerTextures[i].appTexturePtr == IntPtr.Zero)
             {
@@ -463,22 +386,17 @@ public class OVROverlay : MonoBehaviour
                     var rt = textures[i] as RenderTexture;
                     if (rt && !rt.IsCreated())
                         rt.Create();
-
                     layerTextures[i].appTexturePtr = (texturePtrs[i] != IntPtr.Zero) ? texturePtrs[i] : textures[i].GetNativeTexturePtr();
-
                     if (layerTextures[i].appTexturePtr != IntPtr.Zero)
                         layerTextures[i].appTexture = textures[i];
                 }
             }
-
             if (currentOverlayShape == OverlayShape.Cubemap)
-            {
                 if (textures[i] as Cubemap == null)
                 {
                     Debug.LogError("Need Cubemap texture for cube map overlay");
                     return false;
                 }
-            }
         }
 
 #if !UNITY_ANDROID || UNITY_EDITOR
@@ -488,17 +406,14 @@ public class OVROverlay : MonoBehaviour
             return false;
         }
 #endif
-
         if (layerTextures[0].appTexture == null || layerTextures[0].appTexturePtr == IntPtr.Zero)
             return false;
-
         return true;
     }
 
-    private OVRPlugin.LayerDesc GetCurrentLayerDesc()
+    OVRPlugin.LayerDesc GetCurrentLayerDesc()
     {
-        OVRPlugin.Sizei textureSize = new OVRPlugin.Sizei() { w = 0, h = 0 };
-
+        var textureSize = new OVRPlugin.Sizei() { w = 0, h = 0 };
         if (isExternalSurface)
         {
             textureSize.w = externalSurfaceWidth;
@@ -507,14 +422,11 @@ public class OVROverlay : MonoBehaviour
         else
         {
             if (textures[0] == null)
-            {
                 Debug.LogWarning("textures[0] hasn't been set");
-            }
             textureSize.w = textures[0] ? textures[0].width : 0;
             textureSize.h = textures[0] ? textures[0].height : 0;
         }
-
-        OVRPlugin.LayerDesc newDesc = new OVRPlugin.LayerDesc()
+        var newDesc = new OVRPlugin.LayerDesc()
         {
             Format = OVRPlugin.EyeTextureFormat.R8G8B8A8_sRGB,
             LayerFlags = isExternalSurface ? 0 : (int)OVRPlugin.LayerFlags.TextureOriginAtBottomLeft,
@@ -524,101 +436,67 @@ public class OVROverlay : MonoBehaviour
             Shape = (OVRPlugin.OverlayShape)currentOverlayShape,
             TextureSize = textureSize
         };
-
         var tex2D = textures[0] as Texture2D;
         if (tex2D != null)
         {
             if (tex2D.format == TextureFormat.RGBAHalf || tex2D.format == TextureFormat.RGBAFloat)
                 newDesc.Format = OVRPlugin.EyeTextureFormat.R16G16B16A16_FP;
-
             newDesc.MipLevels = tex2D.mipmapCount;
         }
-
         var texCube = textures[0] as Cubemap;
         if (texCube != null)
         {
             if (texCube.format == TextureFormat.RGBAHalf || texCube.format == TextureFormat.RGBAFloat)
                 newDesc.Format = OVRPlugin.EyeTextureFormat.R16G16B16A16_FP;
-
             newDesc.MipLevels = texCube.mipmapCount;
         }
-
         var rt = textures[0] as RenderTexture;
         if (rt != null)
         {
             newDesc.SampleCount = rt.antiAliasing;
-
             if (rt.format == RenderTextureFormat.ARGBHalf || rt.format == RenderTextureFormat.ARGBFloat || rt.format == RenderTextureFormat.RGB111110Float)
                 newDesc.Format = OVRPlugin.EyeTextureFormat.R16G16B16A16_FP;
         }
-
         if (isProtectedContent)
-        {
             newDesc.LayerFlags |= (int)OVRPlugin.LayerFlags.ProtectedContent;
-        }
-
         if (isExternalSurface)
-        {
             newDesc.LayerFlags |= (int)OVRPlugin.LayerFlags.AndroidSurfaceSwapChain;
-        }
-
         return newDesc;
     }
 
-    private bool PopulateLayer(int mipLevels, bool isHdr, OVRPlugin.Sizei size, int sampleCount, int stage)
+    bool PopulateLayer(int mipLevels, bool isHdr, OVRPlugin.Sizei size, int sampleCount, int stage)
     {
         if (isExternalSurface)
-        {
             return true;
-        }
-
-        bool ret = false;
-
-        RenderTextureFormat rtFormat = (isHdr) ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32;
-
-        for (int eyeId = 0; eyeId < texturesPerStage; ++eyeId)
+        var ret = false;
+        var rtFormat = isHdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32;
+        for (var eyeId = 0; eyeId < texturesPerStage; ++eyeId)
         {
-            Texture et = layerTextures[eyeId].swapChain[stage];
+            var et = layerTextures[eyeId].swapChain[stage];
             if (et == null)
                 continue;
-
-            for (int mip = 0; mip < mipLevels; ++mip)
+            for (var mip = 0; mip < mipLevels; ++mip)
             {
-                int width = size.w >> mip;
+                var width = size.w >> mip;
                 if (width < 1) width = 1;
-                int height = size.h >> mip;
+                var height = size.h >> mip;
                 if (height < 1) height = 1;
-#if UNITY_2017_1_1 || UNITY_2017_2_OR_NEWER
-				RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, rtFormat, 0);
-				descriptor.msaaSamples = sampleCount;
-				descriptor.useMipMap = true;
-				descriptor.autoGenerateMips = false;
-				descriptor.sRGB = false;
-
-				var tempRTDst = RenderTexture.GetTemporary(descriptor);
-#else
-                var tempRTDst = RenderTexture.GetTemporary(width, height, 0, rtFormat, RenderTextureReadWrite.Linear, sampleCount);
-#endif
-
+                var descriptor = new RenderTextureDescriptor(width, height, rtFormat, 0);
+                descriptor.msaaSamples = sampleCount;
+                descriptor.useMipMap = true;
+                descriptor.autoGenerateMips = false;
+                descriptor.sRGB = false;
+                var tempRTDst = RenderTexture.GetTemporary(descriptor);
                 if (!tempRTDst.IsCreated())
                     tempRTDst.Create();
-
                 tempRTDst.DiscardContents();
-
-                bool dataIsLinear = isHdr || (QualitySettings.activeColorSpace == ColorSpace.Linear);
-
-#if !UNITY_2017_1_OR_NEWER
-                var rt = textures[eyeId] as RenderTexture;
-                dataIsLinear |= rt != null && rt.sRGB; //HACK: Unity 5.6 and earlier convert to linear on read from sRGB RenderTexture.
-#endif
+                var dataIsLinear = isHdr || (QualitySettings.activeColorSpace == ColorSpace.Linear);
 #if UNITY_ANDROID && !UNITY_EDITOR
 				dataIsLinear = true; //HACK: Graphics.CopyTexture causes linear->srgb conversion on target write with D3D but not GLES.
 #endif
-
                 if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
                 {
                     tex2DMaterial.SetInt("_linearToSrgb", (!isHdr && dataIsLinear) ? 1 : 0);
-
                     //Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
 #if !UNITY_ANDROID || UNITY_EDITOR
                     // The PC compositor uses premultiplied alpha, so multiply it here.
@@ -627,48 +505,37 @@ public class OVROverlay : MonoBehaviour
                     Graphics.Blit(textures[eyeId], tempRTDst, tex2DMaterial);
                     Graphics.CopyTexture(tempRTDst, 0, 0, et, 0, mip);
                 }
-#if UNITY_2017_1_OR_NEWER
-				else // Cubemap
-				{
-					for (int face = 0; face < 6; ++face)
-					{
-						cubeMaterial.SetInt("_linearToSrgb", (!isHdr && dataIsLinear) ? 1 : 0);
-
+                else // Cubemap
+                    for (var face = 0; face < 6; ++face)
+                    {
+                        cubeMaterial.SetInt("_linearToSrgb", (!isHdr && dataIsLinear) ? 1 : 0);
 #if !UNITY_ANDROID || UNITY_EDITOR
-						// The PC compositor uses premultiplied alpha, so multiply it here.
-						cubeMaterial.SetInt("_premultiply", 1);
+                        // The PC compositor uses premultiplied alpha, so multiply it here.
+                        cubeMaterial.SetInt("_premultiply", 1);
 #endif
-						cubeMaterial.SetInt("_face", face);
-						//Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
-						Graphics.Blit(textures[eyeId], tempRTDst, cubeMaterial);
-						Graphics.CopyTexture(tempRTDst, 0, 0, et, face, mip);
-					}
-				}
-#endif
+                        cubeMaterial.SetInt("_face", face);
+                        //Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
+                        Graphics.Blit(textures[eyeId], tempRTDst, cubeMaterial);
+                        Graphics.CopyTexture(tempRTDst, 0, 0, et, face, mip);
+                    }
                 RenderTexture.ReleaseTemporary(tempRTDst);
-
                 ret = true;
             }
         }
-
         return ret;
     }
 
-    private bool SubmitLayer(bool overlay, bool headLocked, bool noDepthBufferTesting, OVRPose pose, Vector3 scale, int frameIndex)
+    bool SubmitLayer(bool overlay, bool headLocked, bool noDepthBufferTesting, OVRPose pose, Vector3 scale, int frameIndex)
     {
-        int rightEyeIndex = (texturesPerStage >= 2) ? 1 : 0;
+        var rightEyeIndex = (texturesPerStage >= 2) ? 1 : 0;
         if (overrideTextureRectMatrix)
-        {
             UpdateTextureRectMatrix();
-        }
-        bool isOverlayVisible = OVRPlugin.EnqueueSubmitLayer(overlay, headLocked, noDepthBufferTesting,
-            isExternalSurface ? System.IntPtr.Zero : layerTextures[0].appTexturePtr,
-            isExternalSurface ? System.IntPtr.Zero : layerTextures[rightEyeIndex].appTexturePtr,
+        var isOverlayVisible = OVRPlugin.EnqueueSubmitLayer(overlay, headLocked, noDepthBufferTesting,
+            isExternalSurface ? IntPtr.Zero : layerTextures[0].appTexturePtr,
+            isExternalSurface ? IntPtr.Zero : layerTextures[rightEyeIndex].appTexturePtr,
             layerId, frameIndex, pose.flipZ().ToPosef(), scale.ToVector3f(), layerIndex, (OVRPlugin.OverlayShape)currentOverlayShape,
             overrideTextureRectMatrix, textureRectMatrix, overridePerLayerColorScaleAndOffset, colorScale, colorOffset);
-
         prevOverlayShape = currentOverlayShape;
-
         return isOverlayVisible;
     }
 
@@ -677,25 +544,20 @@ public class OVROverlay : MonoBehaviour
     void Awake()
     {
         Debug.Log("Overlay Awake");
-
         if (tex2DMaterial == null)
             tex2DMaterial = new Material(Shader.Find("Oculus/Texture2D Blit"));
-
         if (cubeMaterial == null)
             cubeMaterial = new Material(Shader.Find("Oculus/Cubemap Blit"));
-
         rend = GetComponent<Renderer>();
-
         if (textures.Length == 0)
             textures = new Texture[] { null };
-
         // Backward compatibility
         if (rend != null && textures[0] == null)
             textures[0] = rend.material.mainTexture;
     }
 
-    static public string OpenVROverlayKey { get { return "unity:" + Application.companyName + "." + Application.productName; } }
-    private ulong OpenVROverlayHandle = OVR.OpenVR.OpenVR.k_ulOverlayHandleInvalid;
+    static public string OpenVROverlayKey => "unity:" + Application.companyName + "." + Application.productName;
+    ulong OpenVROverlayHandle = OVR.OpenVR.OpenVR.k_ulOverlayHandleInvalid;
 
     void OnEnable()
     {
@@ -704,14 +566,13 @@ public class OVROverlay : MonoBehaviour
             enabled = false;
             return;
         }
-
         constructedOverlayXRDevice = OVRManager.XRDevice.Unknown;
         if (OVRManager.loadedXRDevice == OVRManager.XRDevice.OpenVR)
         {
-            OVR.OpenVR.CVROverlay overlay = OVR.OpenVR.OpenVR.Overlay;
+            var overlay = OVR.OpenVR.OpenVR.Overlay;
             if (overlay != null)
             {
-                OVR.OpenVR.EVROverlayError error = overlay.CreateOverlay(OpenVROverlayKey + transform.name, gameObject.name, ref OpenVROverlayHandle);
+                var error = overlay.CreateOverlay(OpenVROverlayKey + transform.name, gameObject.name, ref OpenVROverlayHandle);
                 if (error != OVR.OpenVR.EVROverlayError.None)
                 {
                     enabled = false;
@@ -724,7 +585,6 @@ public class OVROverlay : MonoBehaviour
                 return;
             }
         }
-
         constructedOverlayXRDevice = OVRManager.loadedXRDevice;
     }
 
@@ -732,10 +592,8 @@ public class OVROverlay : MonoBehaviour
     {
         if ((gameObject.hideFlags & HideFlags.DontSaveInBuild) != 0)
             return;
-
         if (OVRManager.loadedXRDevice != constructedOverlayXRDevice)
             return;
-
         if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
         {
             DestroyLayerTextures();
@@ -745,11 +603,9 @@ public class OVROverlay : MonoBehaviour
         {
             if (OpenVROverlayHandle != OVR.OpenVR.OpenVR.k_ulOverlayHandleInvalid)
             {
-                OVR.OpenVR.CVROverlay overlay = OVR.OpenVR.OpenVR.Overlay;
+                var overlay = OVR.OpenVR.OpenVR.Overlay;
                 if (overlay != null)
-                {
                     overlay.DestroyOverlay(OpenVROverlayHandle);
-                }
                 OpenVROverlayHandle = OVR.OpenVR.OpenVR.k_ulOverlayHandleInvalid;
             }
         }
@@ -764,18 +620,15 @@ public class OVROverlay : MonoBehaviour
 
     bool ComputeSubmit(ref OVRPose pose, ref Vector3 scale, ref bool overlay, ref bool headLocked)
     {
-        Camera headCamera = Camera.main;
-
-        overlay = (currentOverlayType == OverlayType.Overlay);
+        var headCamera = Camera.main;
+        overlay = currentOverlayType == OverlayType.Overlay;
         headLocked = false;
         for (var t = transform; t != null && !headLocked; t = t.parent)
             headLocked |= (t == headCamera.transform);
-
-        pose = (headLocked) ? transform.ToHeadSpacePose(headCamera) : transform.ToTrackingSpacePose(headCamera);
+        pose = headLocked ? transform.ToHeadSpacePose(headCamera) : transform.ToTrackingSpacePose(headCamera);
         scale = transform.lossyScale;
-        for (int i = 0; i < 3; ++i)
+        for (var i = 0; i < 3; ++i)
             scale[i] /= headCamera.transform.lossyScale[i];
-
         if (currentOverlayShape == OverlayShape.Cubemap)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR

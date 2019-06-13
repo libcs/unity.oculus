@@ -34,11 +34,9 @@ public class OVRResetOrientation : MonoBehaviour
     {
         // NOTE: some of the buttons defined in OVRInput.RawButton are not available on the Android game pad controller
         if (OVRInput.GetDown(resetButton))
-        {
             //*************************
             // reset orientation
             //*************************
             OVRManager.display.RecenterPose();
-        }
     }
 }

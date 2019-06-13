@@ -14,10 +14,7 @@ ANY KIND, either express or implied. See the License for the specific language g
 permissions and limitations under the License.
 ************************************************************************************/
 
-using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
-using VR = UnityEngine.VR;
 
 /// <summary>
 /// An infrared camera that tracks the position of a head-mounted display.
@@ -46,46 +43,23 @@ public class OVRTracker
     /// <summary>
     /// If true, a sensor is attached to the system.
     /// </summary>
-    public bool isPresent
-    {
-        get
-        {
-            if (!OVRManager.isHmdPresent)
-                return false;
-
-            return OVRPlugin.positionSupported;
-        }
-    }
+    public bool isPresent => !OVRManager.isHmdPresent ? false : OVRPlugin.positionSupported;
 
     /// <summary>
     /// If true, the sensor is actively tracking the HMD's position. Otherwise the HMD may be temporarily occluded, the system may not support position tracking, etc.
     /// </summary>
-    public bool isPositionTracked
-    {
-        get
-        {
-            return OVRPlugin.positionTracked;
-        }
-    }
+    public bool isPositionTracked => OVRPlugin.positionTracked;
 
     /// <summary>
     /// If this is true and a sensor is available, the system will use position tracking when isPositionTracked is also true.
     /// </summary>
     public bool isEnabled
     {
-        get
-        {
-            if (!OVRManager.isHmdPresent)
-                return false;
-
-            return OVRPlugin.position;
-        }
-
+        get => !OVRManager.isHmdPresent ? false : OVRPlugin.position;
         set
         {
             if (!OVRManager.isHmdPresent)
                 return;
-
             OVRPlugin.position = value;
         }
     }
@@ -97,14 +71,10 @@ public class OVRTracker
     {
         get
         {
-            int count = 0;
-
-            for (int i = 0; i < (int)OVRPlugin.Tracker.Count; ++i)
-            {
+            var count = 0;
+            for (var i = 0; i < (int)OVRPlugin.Tracker.Count; ++i)
                 if (GetPresent(i))
                     count++;
-            }
-
             return count;
         }
     }
@@ -112,13 +82,7 @@ public class OVRTracker
     /// <summary>
     /// Gets the sensor's viewing frustum.
     /// </summary>
-    public Frustum GetFrustum(int tracker = 0)
-    {
-        if (!OVRManager.isHmdPresent)
-            return new Frustum();
-
-        return OVRPlugin.GetTrackerFrustum((OVRPlugin.Tracker)tracker).ToFrustum();
-    }
+    public Frustum GetFrustum(int tracker = 0) => !OVRManager.isHmdPresent ? new Frustum() : OVRPlugin.GetTrackerFrustum((OVRPlugin.Tracker)tracker).ToFrustum();
 
     /// <summary>
     /// Gets the sensor's pose, relative to the head's pose at the time of the last pose recentering.
@@ -127,26 +91,15 @@ public class OVRTracker
     {
         if (!OVRManager.isHmdPresent)
             return OVRPose.identity;
-
         OVRPose p;
         switch (tracker)
         {
-            case 0:
-                p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerZero, OVRPlugin.Step.Render).ToOVRPose();
-                break;
-            case 1:
-                p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerOne, OVRPlugin.Step.Render).ToOVRPose();
-                break;
-            case 2:
-                p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerTwo, OVRPlugin.Step.Render).ToOVRPose();
-                break;
-            case 3:
-                p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerThree, OVRPlugin.Step.Render).ToOVRPose();
-                break;
-            default:
-                return OVRPose.identity;
+            case 0: p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerZero, OVRPlugin.Step.Render).ToOVRPose(); break;
+            case 1: p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerOne, OVRPlugin.Step.Render).ToOVRPose(); break;
+            case 2: p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerTwo, OVRPlugin.Step.Render).ToOVRPose(); break;
+            case 3: p = OVRPlugin.GetNodePose(OVRPlugin.Node.TrackerThree, OVRPlugin.Step.Render).ToOVRPose(); break;
+            default: return OVRPose.identity;
         }
-
         return new OVRPose()
         {
             position = p.position,
@@ -161,19 +114,13 @@ public class OVRTracker
     {
         if (!OVRManager.isHmdPresent)
             return false;
-
         switch (tracker)
         {
-            case 0:
-                return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerZero);
-            case 1:
-                return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerOne);
-            case 2:
-                return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerTwo);
-            case 3:
-                return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerThree);
-            default:
-                return false;
+            case 0: return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerZero);
+            case 1: return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerOne);
+            case 2: return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerTwo);
+            case 3: return OVRPlugin.GetNodePositionTracked(OVRPlugin.Node.TrackerThree);
+            default: return false;
         }
     }
 
@@ -181,19 +128,13 @@ public class OVRTracker
     {
         if (!OVRManager.isHmdPresent)
             return false;
-
         switch (tracker)
         {
-            case 0:
-                return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerZero);
-            case 1:
-                return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerOne);
-            case 2:
-                return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerTwo);
-            case 3:
-                return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerThree);
-            default:
-                return false;
+            case 0: return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerZero);
+            case 1: return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerOne);
+            case 2: return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerTwo);
+            case 3: return OVRPlugin.GetNodePresent(OVRPlugin.Node.TrackerThree);
+            default: return false;
         }
     }
 }

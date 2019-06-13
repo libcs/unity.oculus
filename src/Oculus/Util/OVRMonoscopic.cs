@@ -26,7 +26,7 @@ public class OVRMonoscopic : MonoBehaviour
     /// </summary>
     public OVRInput.RawButton toggleButton = OVRInput.RawButton.B;
 
-    private bool monoscopic = false;
+    bool monoscopic = false;
 
     /// <summary>
     /// Check input and toggle monoscopic rendering mode if necessary
@@ -44,5 +44,4 @@ public class OVRMonoscopic : MonoBehaviour
             OVRManager.instance.monoscopic = monoscopic;
         }
     }
-
 }

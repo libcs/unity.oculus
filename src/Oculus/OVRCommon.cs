@@ -18,22 +18,10 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-
-#if UNITY_2017_2_OR_NEWER
 using InputTracking = UnityEngine.XR.InputTracking;
 using Node = UnityEngine.XR.XRNode;
 using NodeState = UnityEngine.XR.XRNodeState;
 using Device = UnityEngine.XR.XRDevice;
-#elif UNITY_2017_1_OR_NEWER
-using InputTracking = UnityEngine.VR.InputTracking;
-using Node = UnityEngine.VR.VRNode;
-using NodeState = UnityEngine.VR.VRNodeState;
-using Device = UnityEngine.VR.VRDevice;
-#else
-using InputTracking = UnityEngine.VR.InputTracking;
-using Node = UnityEngine.VR.VRNode;
-using Device = UnityEngine.VR.VRDevice;
-#endif
 
 /// <summary>
 /// Miscellaneous extension methods that any script can use.
@@ -46,15 +34,10 @@ public static class OVRExtensions
     public static OVRPose ToTrackingSpacePose(this Transform transform, Camera camera)
     {
         OVRPose headPose;
-
         headPose.position = InputTracking.GetLocalPosition(Node.Head);
         headPose.orientation = InputTracking.GetLocalRotation(Node.Head);
-
-        var ret = headPose * transform.ToHeadSpacePose(camera);
-
-        return ret;
+        return headPose * transform.ToHeadSpacePose(camera);
     }
-
 
     /// <summary>
     /// Converts the given pose from tracking-space to world-space.
@@ -62,26 +45,18 @@ public static class OVRExtensions
     public static OVRPose ToWorldSpacePose(OVRPose trackingSpacePose)
     {
         OVRPose headPose;
-
         headPose.position = InputTracking.GetLocalPosition(Node.Head);
         headPose.orientation = InputTracking.GetLocalRotation(Node.Head);
-
         // Transform from tracking-Space to head-Space
-        OVRPose poseInHeadSpace = headPose.Inverse() * trackingSpacePose;
-
+        var poseInHeadSpace = headPose.Inverse() * trackingSpacePose;
         // Transform from head space to world space
-        OVRPose ret = Camera.main.transform.ToOVRPose() * poseInHeadSpace;
-
-        return ret;
+        return Camera.main.transform.ToOVRPose() * poseInHeadSpace;
     }
 
     /// <summary>
     /// Converts the given world-space transform to an OVRPose in head space.
     /// </summary>
-    public static OVRPose ToHeadSpacePose(this Transform transform, Camera camera)
-    {
-        return camera.transform.ToOVRPose().Inverse() * transform.ToOVRPose();
-    }
+    public static OVRPose ToHeadSpacePose(this Transform transform, Camera camera) => camera.transform.ToOVRPose().Inverse() * transform.ToOVRPose();
 
     public static OVRPose ToOVRPose(this Transform t, bool isLocal = false)
     {
@@ -105,105 +80,52 @@ public static class OVRExtensions
         }
     }
 
-    public static OVRPose ToOVRPose(this OVRPlugin.Posef p)
+    public static OVRPose ToOVRPose(this OVRPlugin.Posef p) => new OVRPose
     {
-        return new OVRPose()
+        position = new Vector3(p.Position.x, p.Position.y, -p.Position.z),
+        orientation = new Quaternion(-p.Orientation.x, -p.Orientation.y, p.Orientation.z, p.Orientation.w)
+    };
+
+    public static OVRTracker.Frustum ToFrustum(this OVRPlugin.Frustumf f) => new OVRTracker.Frustum
+    {
+        nearZ = f.zNear,
+        farZ = f.zFar,
+        fov = new Vector2
         {
-            position = new Vector3(p.Position.x, p.Position.y, -p.Position.z),
-            orientation = new Quaternion(-p.Orientation.x, -p.Orientation.y, p.Orientation.z, p.Orientation.w)
-        };
-    }
+            x = Mathf.Rad2Deg * f.fovX,
+            y = Mathf.Rad2Deg * f.fovY
+        }
+    };
 
-    public static OVRTracker.Frustum ToFrustum(this OVRPlugin.Frustumf f)
+    public static Color FromColorf(this OVRPlugin.Colorf c) => new Color { r = c.r, g = c.g, b = c.b, a = c.a };
+    public static OVRPlugin.Colorf ToColorf(this Color c) => new OVRPlugin.Colorf { r = c.r, g = c.g, b = c.b, a = c.a };
+    public static Vector3 FromVector3f(this OVRPlugin.Vector3f v) => new Vector3 { x = v.x, y = v.y, z = v.z };
+    public static Vector3 FromFlippedZVector3f(this OVRPlugin.Vector3f v) => new Vector3 { x = v.x, y = v.y, z = -v.z };
+    public static OVRPlugin.Vector3f ToVector3f(this Vector3 v) => new OVRPlugin.Vector3f { x = v.x, y = v.y, z = v.z };
+    public static OVRPlugin.Vector3f ToFlippedZVector3f(this Vector3 v) => new OVRPlugin.Vector3f { x = v.x, y = v.y, z = -v.z };
+    public static Quaternion FromQuatf(this OVRPlugin.Quatf q) => new Quaternion { x = q.x, y = q.y, z = q.z, w = q.w };
+    public static Quaternion FromFlippedZQuatf(this OVRPlugin.Quatf q) => new Quaternion { x = -q.x, y = -q.y, z = q.z, w = q.w };
+    public static OVRPlugin.Quatf ToQuatf(this Quaternion q) => new OVRPlugin.Quatf { x = q.x, y = q.y, z = q.z, w = q.w };
+    public static OVRPlugin.Quatf ToFlippedZQuatf(this Quaternion q) => new OVRPlugin.Quatf { x = -q.x, y = -q.y, z = q.z, w = q.w };
+
+    public static OVR.OpenVR.HmdMatrix34_t ConvertToHMDMatrix34(this Matrix4x4 m) => new OVR.OpenVR.HmdMatrix34_t
     {
-        return new OVRTracker.Frustum()
-        {
-            nearZ = f.zNear,
-            farZ = f.zFar,
-
-            fov = new Vector2()
-            {
-                x = Mathf.Rad2Deg * f.fovX,
-                y = Mathf.Rad2Deg * f.fovY
-            }
-        };
-    }
-
-    public static Color FromColorf(this OVRPlugin.Colorf c)
-    {
-        return new Color() { r = c.r, g = c.g, b = c.b, a = c.a };
-    }
-
-    public static OVRPlugin.Colorf ToColorf(this Color c)
-    {
-        return new OVRPlugin.Colorf() { r = c.r, g = c.g, b = c.b, a = c.a };
-    }
-
-    public static Vector3 FromVector3f(this OVRPlugin.Vector3f v)
-    {
-        return new Vector3() { x = v.x, y = v.y, z = v.z };
-    }
-
-    public static Vector3 FromFlippedZVector3f(this OVRPlugin.Vector3f v)
-    {
-        return new Vector3() { x = v.x, y = v.y, z = -v.z };
-    }
-
-    public static OVRPlugin.Vector3f ToVector3f(this Vector3 v)
-    {
-        return new OVRPlugin.Vector3f() { x = v.x, y = v.y, z = v.z };
-    }
-
-    public static OVRPlugin.Vector3f ToFlippedZVector3f(this Vector3 v)
-    {
-        return new OVRPlugin.Vector3f() { x = v.x, y = v.y, z = -v.z };
-    }
-
-    public static Quaternion FromQuatf(this OVRPlugin.Quatf q)
-    {
-        return new Quaternion() { x = q.x, y = q.y, z = q.z, w = q.w };
-    }
-
-    public static Quaternion FromFlippedZQuatf(this OVRPlugin.Quatf q)
-    {
-        return new Quaternion() { x = -q.x, y = -q.y, z = q.z, w = q.w };
-    }
-
-    public static OVRPlugin.Quatf ToQuatf(this Quaternion q)
-    {
-        return new OVRPlugin.Quatf() { x = q.x, y = q.y, z = q.z, w = q.w };
-    }
-
-    public static OVRPlugin.Quatf ToFlippedZQuatf(this Quaternion q)
-    {
-        return new OVRPlugin.Quatf() { x = -q.x, y = -q.y, z = q.z, w = q.w };
-    }
-
-    public static OVR.OpenVR.HmdMatrix34_t ConvertToHMDMatrix34(this Matrix4x4 m)
-    {
-        OVR.OpenVR.HmdMatrix34_t pose = new OVR.OpenVR.HmdMatrix34_t();
-
-        pose.m0 = m[0, 0];
-        pose.m1 = m[0, 1];
-        pose.m2 = -m[0, 2];
-        pose.m3 = m[0, 3];
-
-        pose.m4 = m[1, 0];
-        pose.m5 = m[1, 1];
-        pose.m6 = -m[1, 2];
-        pose.m7 = m[1, 3];
-
-        pose.m8 = -m[2, 0];
-        pose.m9 = -m[2, 1];
-        pose.m10 = m[2, 2];
-        pose.m11 = -m[2, 3];
-
-        return pose;
-    }
-
+        m0 = m[0, 0],
+        m1 = m[0, 1],
+        m2 = -m[0, 2],
+        m3 = m[0, 3],
+        m4 = m[1, 0],
+        m5 = m[1, 1],
+        m6 = -m[1, 2],
+        m7 = m[1, 3],
+        m8 = -m[2, 0],
+        m9 = -m[2, 1],
+        m10 = m[2, 2],
+        m11 = -m[2, 3]
+    };
 }
 
-//4 types of node state properties that can be queried with UnityEngine.XR
+// 4 types of node state properties that can be queried with UnityEngine.XR
 public enum NodeStatePropertyType
 {
     Acceleration,
@@ -216,14 +138,9 @@ public enum NodeStatePropertyType
 
 public static class OVRNodeStateProperties
 {
-#if UNITY_2017_1_OR_NEWER
-	private static List<NodeState> nodeStateList = new List<NodeState>();
-#endif
+    static List<NodeState> nodeStateList = new List<NodeState>();
 
-    public static bool IsHmdPresent()
-    {
-        return Device.isPresent;
-    }
+    public static bool IsHmdPresent() => Device.isPresent;
 
     public static bool GetNodeStatePropertyVector3(Node nodeType, NodeStatePropertyType propertyType, OVRPlugin.Node ovrpNodeType, OVRPlugin.Step stepType, out Vector3 retVec)
     {
@@ -231,58 +148,44 @@ public static class OVRNodeStateProperties
         switch (propertyType)
         {
             case NodeStatePropertyType.Acceleration:
-#if UNITY_2017_1_OR_NEWER
-				if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Acceleration, out retVec))
-					return true;
-#endif
+                if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Acceleration, out retVec))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retVec = OVRPlugin.GetNodeAcceleration(ovrpNodeType, stepType).FromFlippedZVector3f();
                     return true;
                 }
                 break;
-
             case NodeStatePropertyType.AngularAcceleration:
-#if UNITY_2017_2_OR_NEWER
-				if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.AngularAcceleration, out retVec))
-					return true;
-#endif
+                if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.AngularAcceleration, out retVec))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retVec = OVRPlugin.GetNodeAngularAcceleration(ovrpNodeType, stepType).FromFlippedZVector3f();
                     return true;
                 }
                 break;
-
             case NodeStatePropertyType.Velocity:
-#if UNITY_2017_1_OR_NEWER
-				if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Velocity, out retVec))
-					return true;
-#endif
+                if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Velocity, out retVec))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retVec = OVRPlugin.GetNodeVelocity(ovrpNodeType, stepType).FromFlippedZVector3f();
                     return true;
                 }
                 break;
-
             case NodeStatePropertyType.AngularVelocity:
-#if UNITY_2017_2_OR_NEWER
-				if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.AngularVelocity, out retVec))
-					return true;
-#endif
+                if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.AngularVelocity, out retVec))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retVec = OVRPlugin.GetNodeAngularVelocity(ovrpNodeType, stepType).FromFlippedZVector3f();
                     return true;
                 }
                 break;
-
             case NodeStatePropertyType.Position:
-#if UNITY_2017_1_OR_NEWER
-				if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Position, out retVec))
-					return true;
-#endif
+                if (GetUnityXRNodeStateVector3(nodeType, NodeStatePropertyType.Position, out retVec))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retVec = OVRPlugin.GetNodePose(ovrpNodeType, stepType).ToOVRPose().position;
@@ -290,7 +193,6 @@ public static class OVRNodeStateProperties
                 }
                 break;
         }
-
         return false;
     }
 
@@ -300,10 +202,8 @@ public static class OVRNodeStateProperties
         switch (propertyType)
         {
             case NodeStatePropertyType.Orientation:
-#if UNITY_2017_1_OR_NEWER
-				if (GetUnityXRNodeStateQuaternion(nodeType, NodeStatePropertyType.Orientation, out retQuat))
-					return true;
-#endif
+                if (GetUnityXRNodeStateQuaternion(nodeType, NodeStatePropertyType.Orientation, out retQuat))
+                    return true;
                 if (OVRManager.loadedXRDevice == OVRManager.XRDevice.Oculus)
                 {
                     retQuat = OVRPlugin.GetNodePose(ovrpNodeType, stepType).ToOVRPose().orientation;
@@ -314,107 +214,48 @@ public static class OVRNodeStateProperties
         return false;
     }
 
-#if UNITY_2017_1_OR_NEWER
-	private static bool ValidateProperty(Node nodeType, ref NodeState requestedNodeState)
-	{
-		InputTracking.GetNodeStates(nodeStateList);
+    private static bool ValidateProperty(Node nodeType, ref NodeState requestedNodeState)
+    {
+        InputTracking.GetNodeStates(nodeStateList);
+        if (nodeStateList.Count == 0)
+            return false;
+        var nodeStateFound = false;
+        requestedNodeState = nodeStateList[0];
+        for (var i = 0; i < nodeStateList.Count; i++)
+            if (nodeStateList[i].nodeType == nodeType)
+            {
+                requestedNodeState = nodeStateList[i];
+                nodeStateFound = true;
+                break;
+            }
+        return nodeStateFound;
+    }
 
-		if (nodeStateList.Count == 0)
-			return false;
+    static bool GetUnityXRNodeStateVector3(Node nodeType, NodeStatePropertyType propertyType, out Vector3 retVec)
+    {
+        retVec = Vector3.zero;
+        var requestedNodeState = default(NodeState);
+        if (!ValidateProperty(nodeType, ref requestedNodeState))
+            return false;
+        if (propertyType == NodeStatePropertyType.Acceleration) { if (requestedNodeState.TryGetAcceleration(out retVec)) return true; }
+        else if (propertyType == NodeStatePropertyType.AngularAcceleration) { if (requestedNodeState.TryGetAngularAcceleration(out retVec)) return true; }
+        else if (propertyType == NodeStatePropertyType.Velocity) { if (requestedNodeState.TryGetVelocity(out retVec)) return true; }
+        else if (propertyType == NodeStatePropertyType.AngularVelocity) { if (requestedNodeState.TryGetAngularVelocity(out retVec)) return true; }
+        else if (propertyType == NodeStatePropertyType.Position) { if (requestedNodeState.TryGetPosition(out retVec)) return true; }
+        return false;
+    }
 
-		bool nodeStateFound = false;
-		requestedNodeState = nodeStateList[0];
-
-		for (int i = 0; i < nodeStateList.Count; i++)
-		{
-			if (nodeStateList[i].nodeType == nodeType)
-			{
-				requestedNodeState = nodeStateList[i];
-				nodeStateFound = true;
-				break;
-			}
-		}
-
-		return nodeStateFound;
-	}
-#endif
-
-#if UNITY_2017_1_OR_NEWER
-	private static bool GetUnityXRNodeStateVector3(Node nodeType, NodeStatePropertyType propertyType, out Vector3 retVec)
-	{
-		retVec = Vector3.zero;
-
-		NodeState requestedNodeState = default(NodeState);
-
-		if (!ValidateProperty(nodeType, ref requestedNodeState))
-			return false;
-		
-		if (propertyType == NodeStatePropertyType.Acceleration)
-		{
-			if (requestedNodeState.TryGetAcceleration(out retVec))
-			{
-				return true;
-			}
-		}
-		else if (propertyType == NodeStatePropertyType.AngularAcceleration)
-		{
-#if UNITY_2017_2_OR_NEWER
-			if (requestedNodeState.TryGetAngularAcceleration(out retVec))
-			{
-				return true;
-			}
-#endif
-		}
-		else if (propertyType == NodeStatePropertyType.Velocity)
-		{
-			if (requestedNodeState.TryGetVelocity(out retVec))
-			{
-				return true;
-			}
-		}
-		else if (propertyType == NodeStatePropertyType.AngularVelocity)
-		{
-#if UNITY_2017_2_OR_NEWER
-			if (requestedNodeState.TryGetAngularVelocity(out retVec))
-			{
-				return true;
-			}
-#endif
-		}
-		else if (propertyType == NodeStatePropertyType.Position)
-		{
-			if (requestedNodeState.TryGetPosition(out retVec))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-#endif
-
-#if UNITY_2017_1_OR_NEWER
-	private static bool GetUnityXRNodeStateQuaternion(Node nodeType, NodeStatePropertyType propertyType, out Quaternion retQuat)
-	{
-		retQuat = Quaternion.identity;
-
-		NodeState requestedNodeState = default(NodeState);
-
-		if (!ValidateProperty(nodeType, ref requestedNodeState))
-			return false;
-
-		if (propertyType == NodeStatePropertyType.Orientation)
-		{
-			if (requestedNodeState.TryGetRotation(out retQuat))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-#endif
-
+    static bool GetUnityXRNodeStateQuaternion(Node nodeType, NodeStatePropertyType propertyType, out Quaternion retQuat)
+    {
+        retQuat = Quaternion.identity;
+        var requestedNodeState = default(NodeState);
+        if (!ValidateProperty(nodeType, ref requestedNodeState))
+            return false;
+        if (propertyType == NodeStatePropertyType.Orientation)
+            if (requestedNodeState.TryGetRotation(out retQuat))
+                return true;
+        return false;
+    }
 }
 
 /// <summary>
@@ -426,37 +267,19 @@ public struct OVRPose
     /// <summary>
     /// A pose with no translation or rotation.
     /// </summary>
-    public static OVRPose identity
+    public static OVRPose identity => new OVRPose()
     {
-        get
-        {
-            return new OVRPose()
-            {
-                position = Vector3.zero,
-                orientation = Quaternion.identity
-            };
-        }
-    }
+        position = Vector3.zero,
+        orientation = Quaternion.identity
+    };
 
-    public override bool Equals(System.Object obj)
-    {
-        return obj is OVRPose && this == (OVRPose)obj;
-    }
+    public override bool Equals(object obj) => obj is OVRPose && this == (OVRPose)obj;
 
-    public override int GetHashCode()
-    {
-        return position.GetHashCode() ^ orientation.GetHashCode();
-    }
+    public override int GetHashCode() => position.GetHashCode() ^ orientation.GetHashCode();
 
-    public static bool operator ==(OVRPose x, OVRPose y)
-    {
-        return x.position == y.position && x.orientation == y.orientation;
-    }
+    public static bool operator ==(OVRPose x, OVRPose y) => x.position == y.position && x.orientation == y.orientation;
 
-    public static bool operator !=(OVRPose x, OVRPose y)
-    {
-        return !(x == y);
-    }
+    public static bool operator !=(OVRPose x, OVRPose y) => !(x == y);
 
     /// <summary>
     /// The position.
@@ -471,13 +294,11 @@ public struct OVRPose
     /// <summary>
     /// Multiplies two poses.
     /// </summary>
-    public static OVRPose operator *(OVRPose lhs, OVRPose rhs)
+    public static OVRPose operator *(OVRPose lhs, OVRPose rhs) => new OVRPose
     {
-        var ret = new OVRPose();
-        ret.position = lhs.position + lhs.orientation * rhs.position;
-        ret.orientation = lhs.orientation * rhs.orientation;
-        return ret;
-    }
+        position = lhs.position + lhs.orientation * rhs.position,
+        orientation = lhs.orientation * rhs.orientation
+    };
 
     /// <summary>
     /// Computes the inverse of the given pose.
@@ -502,14 +323,11 @@ public struct OVRPose
         return ret;
     }
 
-    public OVRPlugin.Posef ToPosef()
+    public OVRPlugin.Posef ToPosef() => new OVRPlugin.Posef()
     {
-        return new OVRPlugin.Posef()
-        {
-            Position = position.ToVector3f(),
-            Orientation = orientation.ToQuatf()
-        };
-    }
+        Position = position.ToVector3f(),
+        Orientation = orientation.ToQuatf()
+    };
 }
 
 /// <summary>
@@ -517,52 +335,37 @@ public struct OVRPose
 /// </summary>
 public class OVRNativeBuffer : IDisposable
 {
-    private bool disposed = false;
-    private int m_numBytes = 0;
-    private IntPtr m_ptr = IntPtr.Zero;
+    bool disposed = false;
+    int m_numBytes = 0;
+    IntPtr m_ptr = IntPtr.Zero;
 
     /// <summary>
     /// Creates a buffer of the specified size.
     /// </summary>
-    public OVRNativeBuffer(int numBytes)
-    {
-        Reallocate(numBytes);
-    }
+    public OVRNativeBuffer(int numBytes) => Reallocate(numBytes);
 
     /// <summary>
     /// Releases unmanaged resources and performs other cleanup operations before the <see cref="OVRNativeBuffer"/> is
     /// reclaimed by garbage collection.
     /// </summary>
-    ~OVRNativeBuffer()
-    {
-        Dispose(false);
-    }
+    ~OVRNativeBuffer() { Dispose(false); }
 
     /// <summary>
     /// Reallocates the buffer with the specified new size.
     /// </summary>
-    public void Reset(int numBytes)
-    {
-        Reallocate(numBytes);
-    }
+    public void Reset(int numBytes) => Reallocate(numBytes);
 
     /// <summary>
     /// The current number of bytes in the buffer.
     /// </summary>
-    public int GetCapacity()
-    {
-        return m_numBytes;
-    }
+    public int GetCapacity() => m_numBytes;
 
     /// <summary>
     /// A pointer to the unmanaged memory in the buffer, starting at the given offset in bytes.
     /// </summary>
-    public IntPtr GetPointer(int byteOffset = 0)
-    {
-        if (byteOffset < 0 || byteOffset >= m_numBytes)
-            return IntPtr.Zero;
-        return (byteOffset == 0) ? m_ptr : new IntPtr(m_ptr.ToInt64() + byteOffset);
-    }
+    public IntPtr GetPointer(int byteOffset = 0) => byteOffset < 0 || byteOffset >= m_numBytes
+            ? IntPtr.Zero
+            : (byteOffset == 0) ? m_ptr : new IntPtr(m_ptr.ToInt64() + byteOffset);
 
     /// <summary>
     /// Releases all resource used by the <see cref="OVRNativeBuffer"/> object.
@@ -577,26 +380,17 @@ public class OVRNativeBuffer : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void Dispose(bool disposing)
+    void Dispose(bool disposing)
     {
         if (disposed)
             return;
-
-        if (disposing)
-        {
-            // dispose managed resources
-        }
-
-        // dispose unmanaged resources
         Release();
-
         disposed = true;
     }
 
-    private void Reallocate(int numBytes)
+    void Reallocate(int numBytes)
     {
         Release();
-
         if (numBytes > 0)
         {
             m_ptr = Marshal.AllocHGlobal(numBytes);
@@ -609,7 +403,7 @@ public class OVRNativeBuffer : IDisposable
         }
     }
 
-    private void Release()
+    void Release()
     {
         if (m_ptr != IntPtr.Zero)
         {

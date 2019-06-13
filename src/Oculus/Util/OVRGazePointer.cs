@@ -16,32 +16,19 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 /// <summary>
 /// UI pointer driven by gaze input.
 /// </summary>
 public class OVRGazePointer : OVRCursor
 {
-    private Transform gazeIcon; //the transform that rotates according to our movement
+    Transform gazeIcon; //the transform that rotates according to our movement
 
-    [Tooltip("Should the pointer be hidden when not over interactive objects.")]
-    public bool hideByDefault = true;
-
-    [Tooltip("Time after leaving interactive object before pointer fades.")]
-    public float showTimeoutPeriod = 1;
-
-    [Tooltip("Time after mouse pointer becoming inactive before pointer unfades.")]
-    public float hideTimeoutPeriod = 0.1f;
-
-    [Tooltip("Keep a faint version of the pointer visible while using a mouse")]
-    public bool dimOnHideRequest = true;
-
-    [Tooltip("Angular scale of pointer")]
-    public float depthScaleMultiplier = 0.03f;
-
+    [Tooltip("Should the pointer be hidden when not over interactive objects.")] public bool hideByDefault = true;
+    [Tooltip("Time after leaving interactive object before pointer fades.")] public float showTimeoutPeriod = 1;
+    [Tooltip("Time after mouse pointer becoming inactive before pointer unfades.")] public float hideTimeoutPeriod = 0.1f;
+    [Tooltip("Keep a faint version of the pointer visible while using a mouse")] public bool dimOnHideRequest = true;
+    [Tooltip("Angular scale of pointer")] public float depthScaleMultiplier = 0.03f;
     public bool matchNormalOnPhysicsColliders;
 
     /// <summary>
@@ -62,25 +49,25 @@ public class OVRGazePointer : OVRCursor
     /// <summary>
     /// Current depth of pointer from camera
     /// </summary>
-    private float depth;
-    private float hideUntilTime;
+    float depth;
+    float hideUntilTime;
     /// <summary>
     /// How many times position has been set this frame. Used to detect when there are no position sets in a frame.
     /// </summary>
-    private int positionSetsThisFrame = 0;
+    int positionSetsThisFrame = 0;
     /// <summary>
     /// Last time code requested the pointer be shown. Usually when pointer passes over interactive elements.
     /// </summary>
-    private float lastShowRequestTime;
+    float lastShowRequestTime;
     /// <summary>
     /// Last time pointer was requested to be hidden. Usually mouse pointer activity.
     /// </summary>
-    private float lastHideRequestTime;
+    float lastHideRequestTime;
 
     // Optionally present GUI element displaying progress when using gaze-to-select mechanics
-    private OVRProgressIndicator progressIndicator;
+    OVRProgressIndicator progressIndicator;
 
-    private static OVRGazePointer _instance;
+    static OVRGazePointer _instance;
     public static OVRGazePointer instance
     {
         // If there's no GazePointer already in the scene, instanciate one now.
@@ -89,13 +76,11 @@ public class OVRGazePointer : OVRCursor
             if (_instance == null)
             {
                 Debug.Log(string.Format("Instanciating GazePointer", 0));
-                _instance = (OVRGazePointer)GameObject.Instantiate((OVRGazePointer)Resources.Load("Prefabs/GazePointerRing", typeof(OVRGazePointer)));
+                _instance = Instantiate((OVRGazePointer)Resources.Load("Prefabs/GazePointerRing", typeof(OVRGazePointer)));
             }
             return _instance;
         }
-
     }
-
 
     /// <summary>
     /// Used to determine alpha level of gaze cursor. Could also be used to determine cursor size, for example, as the cursor fades out.
@@ -106,37 +91,15 @@ public class OVRGazePointer : OVRCursor
         {
             // It's possible there are reasons to show the cursor - such as it hovering over some UI - and reasons to hide 
             // the cursor - such as another input method (e.g. mouse) being used. We take both of these in to account.
-
-
-            float strengthFromShowRequest;
-            if (hideByDefault)
-            {
-                // fade the cursor out with time
-                strengthFromShowRequest = Mathf.Clamp01(1 - (Time.time - lastShowRequestTime) / showTimeoutPeriod);
-            }
-            else
-            {
-                // keep it fully visible
-                strengthFromShowRequest = 1;
-            }
-
-            // Now consider factors requesting pointer to be hidden
-            float strengthFromHideRequest;
-
-            strengthFromHideRequest = (lastHideRequestTime + hideTimeoutPeriod > Time.time) ? (dimOnHideRequest ? 0.1f : 0) : 1;
-
-
-            // Hide requests take priority
-            return Mathf.Min(strengthFromShowRequest, strengthFromHideRequest);
+            var strengthFromShowRequest = hideByDefault ? Mathf.Clamp01(1 - (Time.time - lastShowRequestTime) / showTimeoutPeriod) : 1; // fade the cursor out with time | keep it fully visible
+            var strengthFromHideRequest = (lastHideRequestTime + hideTimeoutPeriod > Time.time) ? (dimOnHideRequest ? 0.1f : 0) : 1; // Now consider factors requesting pointer to be hidden
+            return Mathf.Min(strengthFromShowRequest, strengthFromHideRequest); // Hide requests take priority
         }
     }
 
     public float SelectionProgress
     {
-        get
-        {
-            return progressIndicator ? progressIndicator.currentProgress : 0;
-        }
+        get => progressIndicator ? progressIndicator.currentProgress : 0;
         set
         {
             if (progressIndicator)
@@ -154,9 +117,7 @@ public class OVRGazePointer : OVRCursor
             DestroyImmediate(this);
             return;
         }
-
         _instance = this;
-
         gazeIcon = transform.Find("GazeIcon");
         progressIndicator = transform.GetComponent<OVRProgressIndicator>();
     }
@@ -165,19 +126,11 @@ public class OVRGazePointer : OVRCursor
     {
         if (rayTransform == null && Camera.main != null)
             rayTransform = Camera.main.transform;
-
         // Move the gaze cursor to keep it in the middle of the view
         transform.position = rayTransform.position + rayTransform.forward * depth;
-
         // Should we show or hide the gaze cursor?
-        if (visibilityStrength == 0 && !hidden)
-        {
-            Hide();
-        }
-        else if (visibilityStrength > 0 && hidden)
-        {
-            Show();
-        }
+        if (visibilityStrength == 0 && !hidden) Hide();
+        else if (visibilityStrength > 0 && hidden) Show();
     }
 
     /// <summary>
@@ -188,29 +141,21 @@ public class OVRGazePointer : OVRCursor
     public override void SetCursorStartDest(Vector3 _, Vector3 pos, Vector3 normal)
     {
         transform.position = pos;
-
         if (!matchNormalOnPhysicsColliders) normal = rayTransform.forward;
-
         // Set the rotation to match the normal of the surface it's on.
-        Quaternion newRot = transform.rotation;
+        var newRot = transform.rotation;
         newRot.SetLookRotation(normal, rayTransform.up);
         transform.rotation = newRot;
-
         // record depth so that distance doesn't pop when pointer leaves an object
         depth = (rayTransform.position - pos).magnitude;
-
         //set scale based on depth
         currentScale = depth * depthScaleMultiplier;
         transform.localScale = new Vector3(currentScale, currentScale, currentScale);
-
         positionSetsThisFrame++;
         RequestShow();
     }
 
-    public override void SetCursorRay(Transform ray)
-    {
-        // We don't do anything here, because we already set this properly by default in Update.
-    }
+    public override void SetCursorRay(Transform ray) { } // We don't do anything here, because we already set this properly by default in Update.
 
     void LateUpdate()
     {
@@ -218,15 +163,13 @@ public class OVRGazePointer : OVRCursor
         if (positionSetsThisFrame == 0)
         {
             // No geometry intersections, so gazing into space. Make the cursor face directly at the camera
-            Quaternion newRot = transform.rotation;
+            var newRot = transform.rotation;
             newRot.SetLookRotation(rayTransform.forward, rayTransform.up);
             transform.rotation = newRot;
         }
-
-        Quaternion iconRotation = gazeIcon.rotation;
+        var iconRotation = gazeIcon.rotation;
         iconRotation.SetLookRotation(transform.rotation * new Vector3(0, 0, 1));
         gazeIcon.rotation = iconRotation;
-
         positionSetsThisFrame = 0;
     }
 
@@ -236,9 +179,7 @@ public class OVRGazePointer : OVRCursor
     public void RequestHide()
     {
         if (!dimOnHideRequest)
-        {
             Hide();
-        }
         lastHideRequestTime = Time.time;
     }
 
@@ -251,14 +192,11 @@ public class OVRGazePointer : OVRCursor
         lastShowRequestTime = Time.time;
     }
 
-
     // Disable/Enable child elements when we show/hide the cursor. For performance reasons.
     void Hide()
     {
         foreach (Transform child in transform)
-        {
             child.gameObject.SetActive(false);
-        }
         if (GetComponent<Renderer>())
             GetComponent<Renderer>().enabled = false;
         hidden = true;
@@ -267,12 +205,9 @@ public class OVRGazePointer : OVRCursor
     void Show()
     {
         foreach (Transform child in transform)
-        {
             child.gameObject.SetActive(true);
-        }
         if (GetComponent<Renderer>())
             GetComponent<Renderer>().enabled = true;
         hidden = false;
     }
-
 }

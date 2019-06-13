@@ -1,3 +1,5 @@
+// SKYTODO
+
 /************************************************************************************
 Copyright : Copyright (c) Facebook Technologies, LLC and its affiliates. All rights reserved.
 
@@ -128,7 +130,7 @@ public static class OVRPlugin
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private class GUID
+    class GUID
     {
         public int a;
         public short b;
@@ -392,20 +394,20 @@ public static class OVRPlugin
         int h; /* Resolution height */
     }
 
-    private const int OverlayShapeFlagShift = 4;
-    private enum OverlayFlag
+    const int OverlayShapeFlagShift = 4;
+    enum OverlayFlag
     {
-        None = unchecked((int)0x00000000),
-        OnTop = unchecked((int)0x00000001),
-        HeadLocked = unchecked((int)0x00000002),
-        NoDepth = unchecked((int)0x00000004),
+        None = unchecked(0x00000000),
+        OnTop = unchecked(0x00000001),
+        HeadLocked = unchecked(0x00000002),
+        NoDepth = unchecked(0x00000004),
 
         // Using the 5-8 bits for shapes, total 16 potential shapes can be supported 0x000000[0]0 ->  0x000000[F]0
-        ShapeFlag_Quad = unchecked((int)OverlayShape.Quad << OverlayShapeFlagShift),
-        ShapeFlag_Cylinder = unchecked((int)OverlayShape.Cylinder << OverlayShapeFlagShift),
-        ShapeFlag_Cubemap = unchecked((int)OverlayShape.Cubemap << OverlayShapeFlagShift),
-        ShapeFlag_OffcenterCubemap = unchecked((int)OverlayShape.OffcenterCubemap << OverlayShapeFlagShift),
-        ShapeFlagRangeMask = unchecked((int)0xF << OverlayShapeFlagShift),
+        ShapeFlag_Quad = unchecked(OverlayShape.Quad << OverlayShapeFlagShift),
+        ShapeFlag_Cylinder = unchecked(OverlayShape.Cylinder << OverlayShapeFlagShift),
+        ShapeFlag_Cubemap = unchecked(OverlayShape.Cubemap << OverlayShapeFlagShift),
+        ShapeFlag_OffcenterCubemap = unchecked(OverlayShape.OffcenterCubemap << OverlayShapeFlagShift),
+        ShapeFlagRangeMask = unchecked(0xF << OverlayShapeFlagShift),
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -422,10 +424,7 @@ public static class OVRPlugin
         public float y;
         public float z;
         public static readonly Vector3f zero = new Vector3f { x = 0.0f, y = 0.0f, z = 0.0f };
-        public override string ToString()
-        {
-            return string.Format("{0}, {1}, {2}", x, y, z);
-        }
+        public override string ToString() => string.Format("{0}, {1}, {2}", x, y, z);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -436,10 +435,7 @@ public static class OVRPlugin
         public float z;
         public float w;
         public static readonly Quatf identity = new Quatf { x = 0.0f, y = 0.0f, z = 0.0f, w = 1.0f };
-        public override string ToString()
-        {
-            return string.Format("{0}, {1}, {2}, {3}", x, y, z, w);
-        }
+        public override string ToString() => string.Format("{0}, {1}, {2}, {3}", x, y, z, w);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -448,10 +444,7 @@ public static class OVRPlugin
         public Quatf Orientation;
         public Vector3f Position;
         public static readonly Posef identity = new Posef { Orientation = Quatf.identity, Position = Vector3f.zero };
-        public override string ToString()
-        {
-            return string.Format("Position ({0}), Orientation({1})", Position, Orientation);
-        }
+        public override string ToString() => string.Format("Position ({0}), Orientation({1})", Position, Orientation);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -462,11 +455,7 @@ public static class OVRPlugin
         public Vector4 leftScaleBias;
         public Vector4 rightScaleBias;
         public static readonly TextureRectMatrixf zero = new TextureRectMatrixf { leftRect = new Rect(0, 0, 1, 1), rightRect = new Rect(0, 0, 1, 1), leftScaleBias = new Vector4(1, 1, 0, 0), rightScaleBias = new Vector4(1, 1, 0, 0) };
-
-        public override string ToString()
-        {
-            return string.Format("Rect Left ({0}), Rect Right({1}), Scale Bias Left ({2}), Scale Bias Right({3})", leftRect, rightRect, leftScaleBias, rightScaleBias);
-        }
+        public override string ToString() => string.Format("Rect Left ({0}), Rect Right({1}), Scale Bias Left ({2}), Scale Bias Right({3})", leftRect, rightRect, leftScaleBias, rightScaleBias);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -614,8 +603,8 @@ public static class OVRPlugin
             RHandTrigger = cs.RHandTrigger;
             LThumbstick = cs.LThumbstick;
             RThumbstick = cs.RThumbstick;
-            LTouchpad = new Vector2f() { x = 0.0f, y = 0.0f };
-            RTouchpad = new Vector2f() { x = 0.0f, y = 0.0f };
+            LTouchpad = new Vector2f { x = 0.0f, y = 0.0f };
+            RTouchpad = new Vector2f { x = 0.0f, y = 0.0f };
         }
     }
 
@@ -683,8 +672,7 @@ public static class OVRPlugin
     [StructLayout(LayoutKind.Sequential)]
     public struct AppPerfStats
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AppPerfFrameStatsMaxCount)]
-        public AppPerfFrameStats[] FrameStats;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = AppPerfFrameStatsMaxCount)] public AppPerfFrameStats[] FrameStats;
         public int FrameStatsCount;
         public Bool AnyFrameStatsDropped;
         public float AdaptiveGpuPerformanceScale;
@@ -761,8 +749,7 @@ public static class OVRPlugin
     public struct BoundaryGeometry
     {
         public BoundaryType BoundaryType;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        public Vector3f[] Points;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)] public Vector3f[] Points;
         public int PointsCount;
     }
 
@@ -816,14 +803,14 @@ public static class OVRPlugin
 
     public enum LayerFlags
     {
-        Static = (1 << 0),
-        LoadingScreen = (1 << 1),
-        SymmetricFov = (1 << 2),
-        TextureOriginAtBottomLeft = (1 << 3),
-        ChromaticAberrationCorrection = (1 << 4),
-        NoAllocation = (1 << 5),
-        ProtectedContent = (1 << 6),
-        AndroidSurfaceSwapChain = (1 << 7),
+        Static = 1 << 0,
+        LoadingScreen = 1 << 1,
+        SymmetricFov = 1 << 2,
+        TextureOriginAtBottomLeft = 1 << 3,
+        ChromaticAberrationCorrection = 1 << 4,
+        NoAllocation = 1 << 5,
+        ProtectedContent = 1 << 6,
+        AndroidSurfaceSwapChain = 1 << 7,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -838,16 +825,14 @@ public static class OVRPlugin
         public int LayerFlags;
 
         //Eye FOV-only members.
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public Fovf[] Fov;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public Rectf[] VisibleRect;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public Fovf[] Fov;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public Rectf[] VisibleRect;
         public Sizei MaxViewportSize;
         EyeTextureFormat DepthFormat;
 
         public override string ToString()
         {
-            string delim = ", ";
+            var delim = ", ";
             return Shape.ToString()
                 + delim + Layout.ToString()
                 + delim + TextureSize.w.ToString() + "x" + TextureSize.h.ToString()
@@ -863,8 +848,7 @@ public static class OVRPlugin
     {
         int LayerId;
         int TextureStage;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        Recti[] ViewportRect;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] Recti[] ViewportRect;
         Posef Pose;
         int LayerSubmitFlags;
     }
@@ -2515,7 +2499,7 @@ public static class OVRPlugin
 #endif
     }
 
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+#if _WIN
 	public static bool UpdateCameraDevices()
 	{
 #if OVRPLUGIN_UNSUPPORTED_PLATFORM
@@ -3811,7 +3795,7 @@ public static class OVRPlugin
 	{
 		public static readonly System.Version version = new System.Version(1, 16, 0);
 
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+#if _WIN
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern Result ovrp_UpdateCameraDevices();
 
@@ -3848,7 +3832,7 @@ public static class OVRPlugin
 	{
 		public static readonly System.Version version = new System.Version(1, 17, 0);
 
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+#if _WIN
 		[DllImport(pluginName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern Result ovrp_GetExternalCameraPose(CameraDevice camera, out Posef cameraPose);
 

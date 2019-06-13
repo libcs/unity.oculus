@@ -14,11 +14,10 @@ ANY KIND, either express or implied. See the License for the specific language g
 permissions and limitations under the License.
 ************************************************************************************/
 
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class OVRGearVrControllerTest : MonoBehaviour
 {
@@ -26,13 +25,13 @@ public class OVRGearVrControllerTest : MonoBehaviour
     {
         public delegate bool BoolGenerator();
 
-        private string m_name = "";
-        private BoolGenerator m_generator;
-        private bool m_prevValue = false;
-        private bool m_currentValue = false;
-        private bool m_currentValueRecentlyChanged = false;
-        private float m_displayTimeout = 0.0f;
-        private float m_displayTimer = 0.0f;
+        string m_name = "";
+        BoolGenerator m_generator;
+        bool m_prevValue = false;
+        bool m_currentValue = false;
+        bool m_currentValueRecentlyChanged = false;
+        float m_displayTimeout = 0.0f;
+        float m_displayTimer = 0.0f;
 
         public BoolMonitor(string name, BoolGenerator generator, float displayTimeout = 0.5f)
         {
@@ -45,17 +44,14 @@ public class OVRGearVrControllerTest : MonoBehaviour
         {
             m_prevValue = m_currentValue;
             m_currentValue = m_generator();
-
             if (m_currentValue != m_prevValue)
             {
                 m_currentValueRecentlyChanged = true;
                 m_displayTimer = m_displayTimeout;
             }
-
             if (m_displayTimer > 0.0f)
             {
                 m_displayTimer -= Time.deltaTime;
-
                 if (m_displayTimer <= 0.0f)
                 {
                     m_currentValueRecentlyChanged = false;
@@ -67,31 +63,22 @@ public class OVRGearVrControllerTest : MonoBehaviour
         public void AppendToStringBuilder(ref StringBuilder sb)
         {
             sb.Append(m_name);
-
-            if (m_currentValue && m_currentValueRecentlyChanged)
-                sb.Append(": *True*\n");
-            else if (m_currentValue)
-                sb.Append(":  True \n");
-            else if (!m_currentValue && m_currentValueRecentlyChanged)
-                sb.Append(": *False*\n");
-            else if (!m_currentValue)
-                sb.Append(":  False \n");
+            if (m_currentValue && m_currentValueRecentlyChanged) sb.Append(": *True*\n");
+            else if (m_currentValue) sb.Append(":  True \n");
+            else if (!m_currentValue && m_currentValueRecentlyChanged) sb.Append(": *False*\n");
+            else if (!m_currentValue) sb.Append(":  False \n");
         }
     }
 
     public Text uiText;
-    private List<BoolMonitor> monitors;
-    private StringBuilder data;
+    List<BoolMonitor> monitors;
+    StringBuilder data;
 
     void Start()
     {
         if (uiText != null)
-        {
             uiText.supportRichText = false;
-        }
-
         data = new StringBuilder(2048);
-
         monitors = new List<BoolMonitor>()
         {
 			// virtual
@@ -124,7 +111,6 @@ public class OVRGearVrControllerTest : MonoBehaviour
             new BoolMonitor("Touchpad (Touch)",                 () => OVRInput.Get(OVRInput.Touch.PrimaryTouchpad)),
             new BoolMonitor("TouchpadDown (Touch)",             () => OVRInput.GetDown(OVRInput.Touch.PrimaryTouchpad)),
             new BoolMonitor("TouchpadUp (Touch)",               () => OVRInput.GetUp(OVRInput.Touch.PrimaryTouchpad)),
-
 			// raw
 			new BoolMonitor("Start",                            () => OVRInput.Get(OVRInput.RawButton.Start)),
             new BoolMonitor("StartDown",                        () => OVRInput.GetDown(OVRInput.RawButton.Start)),
@@ -137,75 +123,38 @@ public class OVRGearVrControllerTest : MonoBehaviour
             new BoolMonitor("AUp",                              () => OVRInput.GetUp(OVRInput.RawButton.A)),
         };
     }
+
     static string prevConnected = "";
     static BoolMonitor controllers = new BoolMonitor("Controllers Changed", () => { return OVRInput.GetConnectedControllers().ToString() != prevConnected; });
 
     void Update()
     {
-        OVRInput.Controller activeController = OVRInput.GetActiveController();
-
+        var activeController = OVRInput.GetActiveController();
         data.Length = 0;
-        byte recenterCount = OVRInput.GetControllerRecenterCount();
-        data.AppendFormat("RecenterCount: {0}\n", recenterCount);
-
-        byte battery = OVRInput.GetControllerBatteryPercentRemaining();
-        data.AppendFormat("Battery: {0}\n", battery);
-
-        float framerate = OVRPlugin.GetAppFramerate();
-        data.AppendFormat("Framerate: {0:F2}\n", framerate);
-
-        string activeControllerName = activeController.ToString();
-        data.AppendFormat("Active: {0}\n", activeControllerName);
-
-        string connectedControllerNames = OVRInput.GetConnectedControllers().ToString();
-        data.AppendFormat("Connected: {0}\n", connectedControllerNames);
-
-        data.AppendFormat("PrevConnected: {0}\n", prevConnected);
-
+        var recenterCount = OVRInput.GetControllerRecenterCount(); data.AppendFormat("RecenterCount: {0}\n", recenterCount);
+        var battery = OVRInput.GetControllerBatteryPercentRemaining(); data.AppendFormat("Battery: {0}\n", battery);
+        var framerate = OVRPlugin.GetAppFramerate(); data.AppendFormat("Framerate: {0:F2}\n", framerate);
+        var activeControllerName = activeController.ToString(); data.AppendFormat("Active: {0}\n", activeControllerName);
+        var connectedControllerNames = OVRInput.GetConnectedControllers().ToString(); data.AppendFormat("Connected: {0}\n", connectedControllerNames); data.AppendFormat("PrevConnected: {0}\n", prevConnected);
         controllers.Update();
         controllers.AppendToStringBuilder(ref data);
-
         prevConnected = connectedControllerNames;
-
-        Quaternion rot = OVRInput.GetLocalControllerRotation(activeController);
-        data.AppendFormat("Orientation: ({0:F2}, {1:F2}, {2:F2}, {3:F2})\n", rot.x, rot.y, rot.z, rot.w);
-
-        Vector3 angVel = OVRInput.GetLocalControllerAngularVelocity(activeController);
-        data.AppendFormat("AngVel: ({0:F2}, {1:F2}, {2:F2})\n", angVel.x, angVel.y, angVel.z);
-
-        Vector3 angAcc = OVRInput.GetLocalControllerAngularAcceleration(activeController);
-        data.AppendFormat("AngAcc: ({0:F2}, {1:F2}, {2:F2})\n", angAcc.x, angAcc.y, angAcc.z);
-
-        Vector3 pos = OVRInput.GetLocalControllerPosition(activeController);
-        data.AppendFormat("Position: ({0:F2}, {1:F2}, {2:F2})\n", pos.x, pos.y, pos.z);
-
-        Vector3 vel = OVRInput.GetLocalControllerVelocity(activeController);
-        data.AppendFormat("Vel: ({0:F2}, {1:F2}, {2:F2})\n", vel.x, vel.y, vel.z);
-
-        Vector3 acc = OVRInput.GetLocalControllerAcceleration(activeController);
-        data.AppendFormat("Acc: ({0:F2}, {1:F2}, {2:F2})\n", acc.x, acc.y, acc.z);
-
-        Vector2 primaryTouchpad = OVRInput.Get(OVRInput.Axis2D.PrimaryTouchpad);
-        data.AppendFormat("PrimaryTouchpad: ({0:F2}, {1:F2})\n", primaryTouchpad.x, primaryTouchpad.y);
-
-        Vector2 secondaryTouchpad = OVRInput.Get(OVRInput.Axis2D.SecondaryTouchpad);
-        data.AppendFormat("SecondaryTouchpad: ({0:F2}, {1:F2})\n", secondaryTouchpad.x, secondaryTouchpad.y);
-
-        float indexTrigger = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger);
-        data.AppendFormat("PrimaryIndexTriggerAxis1D: ({0:F2})\n", indexTrigger);
-
-        float handTrigger = OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger);
-        data.AppendFormat("PrimaryHandTriggerAxis1D: ({0:F2})\n", handTrigger);
-
-        for (int i = 0; i < monitors.Count; i++)
+        var rot = OVRInput.GetLocalControllerRotation(activeController); data.AppendFormat("Orientation: ({0:F2}, {1:F2}, {2:F2}, {3:F2})\n", rot.x, rot.y, rot.z, rot.w);
+        var angVel = OVRInput.GetLocalControllerAngularVelocity(activeController); data.AppendFormat("AngVel: ({0:F2}, {1:F2}, {2:F2})\n", angVel.x, angVel.y, angVel.z);
+        var angAcc = OVRInput.GetLocalControllerAngularAcceleration(activeController); data.AppendFormat("AngAcc: ({0:F2}, {1:F2}, {2:F2})\n", angAcc.x, angAcc.y, angAcc.z);
+        var pos = OVRInput.GetLocalControllerPosition(activeController); data.AppendFormat("Position: ({0:F2}, {1:F2}, {2:F2})\n", pos.x, pos.y, pos.z);
+        var vel = OVRInput.GetLocalControllerVelocity(activeController); data.AppendFormat("Vel: ({0:F2}, {1:F2}, {2:F2})\n", vel.x, vel.y, vel.z);
+        var acc = OVRInput.GetLocalControllerAcceleration(activeController); data.AppendFormat("Acc: ({0:F2}, {1:F2}, {2:F2})\n", acc.x, acc.y, acc.z);
+        var primaryTouchpad = OVRInput.Get(OVRInput.Axis2D.PrimaryTouchpad); data.AppendFormat("PrimaryTouchpad: ({0:F2}, {1:F2})\n", primaryTouchpad.x, primaryTouchpad.y);
+        var secondaryTouchpad = OVRInput.Get(OVRInput.Axis2D.SecondaryTouchpad); data.AppendFormat("SecondaryTouchpad: ({0:F2}, {1:F2})\n", secondaryTouchpad.x, secondaryTouchpad.y);
+        var indexTrigger = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger); data.AppendFormat("PrimaryIndexTriggerAxis1D: ({0:F2})\n", indexTrigger);
+        var handTrigger = OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger); data.AppendFormat("PrimaryHandTriggerAxis1D: ({0:F2})\n", handTrigger);
+        for (var i = 0; i < monitors.Count; i++)
         {
             monitors[i].Update();
             monitors[i].AppendToStringBuilder(ref data);
         }
-
         if (uiText != null)
-        {
             uiText.text = data.ToString();
-        }
     }
 }

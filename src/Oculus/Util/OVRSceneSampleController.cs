@@ -15,7 +15,6 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
 
 /// <summary>
 /// Sample that allows you to play with various VR settings.
@@ -37,10 +36,10 @@ public class OVRSceneSampleController : MonoBehaviour
     /// </summary>
     public float speedRotationIncrement = 0.05f;
 
-    private OVRPlayerController playerController = null;
+    OVRPlayerController playerController = null;
 
     // Handle to OVRCameraRig
-    private OVRCameraRig cameraController = null;
+    OVRCameraRig cameraController = null;
 
     /// <summary>
     /// We can set the layer to be anything we want to, this allows
@@ -49,14 +48,14 @@ public class OVRSceneSampleController : MonoBehaviour
     public string layerName = "Default";
 
     // Vision mode on/off
-    private bool visionMode = true;
+    bool visionMode = true;
 
     // We want to hold onto GridCube, for potential sharing
     // of the menu RenderTarget
     OVRGridCube gridCube = null;
 
 #if	SHOW_DK2_VARIABLES
-	private string strVisionMode = "Vision Enabled: ON";
+	string strVisionMode = "Vision Enabled: ON";
 #endif
 
     #region MonoBehaviour Message Handlers
@@ -66,38 +65,15 @@ public class OVRSceneSampleController : MonoBehaviour
     void Awake()
     {
         // Find camera controller
-        OVRCameraRig[] cameraControllers;
-        cameraControllers = gameObject.GetComponentsInChildren<OVRCameraRig>();
-
-        if (cameraControllers.Length == 0)
-        {
-            Debug.LogWarning("OVRMainMenu: No OVRCameraRig attached.");
-        }
-        else if (cameraControllers.Length > 1)
-        {
-            Debug.LogWarning("OVRMainMenu: More then 1 OVRCameraRig attached.");
-        }
-        else
-        {
-            cameraController = cameraControllers[0];
-        }
-
+        var cameraControllers = gameObject.GetComponentsInChildren<OVRCameraRig>();
+        if (cameraControllers.Length == 0) Debug.LogWarning("OVRMainMenu: No OVRCameraRig attached.");
+        else if (cameraControllers.Length > 1) Debug.LogWarning("OVRMainMenu: More then 1 OVRCameraRig attached.");
+        else cameraController = cameraControllers[0];
         // Find player controller
-        OVRPlayerController[] playerControllers;
-        playerControllers = gameObject.GetComponentsInChildren<OVRPlayerController>();
-
-        if (playerControllers.Length == 0)
-        {
-            Debug.LogWarning("OVRMainMenu: No OVRPlayerController attached.");
-        }
-        else if (playerControllers.Length > 1)
-        {
-            Debug.LogWarning("OVRMainMenu: More then 1 OVRPlayerController attached.");
-        }
-        else
-        {
-            playerController = playerControllers[0];
-        }
+        var playerControllers = gameObject.GetComponentsInChildren<OVRPlayerController>();
+        if (playerControllers.Length == 0) Debug.LogWarning("OVRMainMenu: No OVRPlayerController attached.");
+        else if (playerControllers.Length > 1) Debug.LogWarning("OVRMainMenu: More then 1 OVRPlayerController attached.");
+        else playerController = playerControllers[0];
     }
 
     /// <summary>
@@ -106,12 +82,11 @@ public class OVRSceneSampleController : MonoBehaviour
     void Start()
     {
         // Make sure to hide cursor
-        if (Application.isEditor == false)
+        if (!Application.isEditor)
         {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
-
         // CameraController updates
         if (cameraController != null)
         {
@@ -129,30 +104,20 @@ public class OVRSceneSampleController : MonoBehaviour
     {
         // Recenter pose
         UpdateRecenterPose();
-
         // Turn On/Off Vision Mode
         UpdateVisionMode();
-
         // Update Speed and Rotation Scale
         if (playerController != null)
             UpdateSpeedAndRotationScaleMultiplier();
-
         // Toggle Fullscreen
         if (Input.GetKeyDown(KeyCode.F11))
             Screen.fullScreen = !Screen.fullScreen;
-
         if (Input.GetKeyDown(KeyCode.M))
-#if UNITY_2017_2_OR_NEWER
-			UnityEngine.XR.XRSettings.showDeviceView = !UnityEngine.XR.XRSettings.showDeviceView;
-#else
-            UnityEngine.VR.VRSettings.showDeviceView = !UnityEngine.VR.VRSettings.showDeviceView;
-#endif
-
-#if !UNITY_ANDROID || UNITY_EDITOR
-        // Escape Application
-        if (Input.GetKeyDown(quitKey))
-            Application.Quit();
-#endif
+            UnityEngine.XR.XRSettings.showDeviceView = !UnityEngine.XR.XRSettings.showDeviceView;
+        if (Application.platform != RuntimePlatform.Android || Application.isEditor)
+            // Escape Application
+            if (Input.GetKeyDown(quitKey))
+                Application.Quit();
     }
     #endregion
 
@@ -173,32 +138,15 @@ public class OVRSceneSampleController : MonoBehaviour
     /// </summary>
     void UpdateSpeedAndRotationScaleMultiplier()
     {
-        float moveScaleMultiplier = 0.0f;
+        var moveScaleMultiplier = 0.0f;
         playerController.GetMoveScaleMultiplier(ref moveScaleMultiplier);
-
-        if (Input.GetKeyDown(KeyCode.Alpha7))
-        {
-            moveScaleMultiplier -= speedRotationIncrement;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha8))
-        {
-            moveScaleMultiplier += speedRotationIncrement;
-        }
-
+        if (Input.GetKeyDown(KeyCode.Alpha7)) moveScaleMultiplier -= speedRotationIncrement;
+        else if (Input.GetKeyDown(KeyCode.Alpha8)) moveScaleMultiplier += speedRotationIncrement;
         playerController.SetMoveScaleMultiplier(moveScaleMultiplier);
-
-        float rotationScaleMultiplier = 0.0f;
+        var rotationScaleMultiplier = 0.0f;
         playerController.GetRotationScaleMultiplier(ref rotationScaleMultiplier);
-
-        if (Input.GetKeyDown(KeyCode.Alpha9))
-        {
-            rotationScaleMultiplier -= speedRotationIncrement;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha0))
-        {
-            rotationScaleMultiplier += speedRotationIncrement;
-        }
-
+        if (Input.GetKeyDown(KeyCode.Alpha9)) rotationScaleMultiplier -= speedRotationIncrement;
+        else if (Input.GetKeyDown(KeyCode.Alpha0)) rotationScaleMultiplier += speedRotationIncrement;
         playerController.SetRotationScaleMultiplier(rotationScaleMultiplier);
     }
 

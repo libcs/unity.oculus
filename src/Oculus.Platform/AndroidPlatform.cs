@@ -6,7 +6,7 @@ namespace Oculus.Platform
     {
         public bool Initialize(string appId)
         {
-            if (UnityApplication.platform != RuntimePlatform.Android)
+            if (UnityEngine.Application.platform != RuntimePlatform.Android)
                 return false;
             if (string.IsNullOrEmpty(appId))
                 throw new UnityException("AppID must not be null or empty");
@@ -15,7 +15,7 @@ namespace Oculus.Platform
 
         public Request<Models.PlatformInitialize> AsyncInitialize(string appId)
         {
-            if (UnityApplication.platform != RuntimePlatform.Android)
+            if (UnityEngine.Application.platform != RuntimePlatform.Android)
                 return new Request<Models.PlatformInitialize>(0);
             if (string.IsNullOrEmpty(appId))
                 throw new UnityException("AppID must not be null or empty");

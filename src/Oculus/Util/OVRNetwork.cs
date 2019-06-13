@@ -15,15 +15,12 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using UnityEngine;
-
 using Debug = UnityEngine.Debug;
 
 public class OVRNetwork
@@ -39,18 +36,15 @@ public class OVRNetwork
         public uint protocolIdentifier;
         public int payloadType;
         public int payloadLength;
-
         public const int StructSize = sizeof(uint) + sizeof(int) + sizeof(int);
 
         // endianness conversion is NOT handled since all our current mobile/PC devices are little-endian
         public byte[] ToBytes()
         {
-            int size = Marshal.SizeOf(this);
+            var size = Marshal.SizeOf(this);
             Trace.Assert(size == StructSize);
-
-            byte[] arr = new byte[size];
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
+            var arr = new byte[size];
+            var ptr = Marshal.AllocHGlobal(size);
             Marshal.StructureToPtr(this, ptr, true);
             Marshal.Copy(ptr, arr, 0, size);
             Marshal.FreeHGlobal(ptr);
@@ -59,18 +53,13 @@ public class OVRNetwork
 
         public static FrameHeader FromBytes(byte[] arr)
         {
-            FrameHeader header = new FrameHeader();
-
-            int size = Marshal.SizeOf(header);
+            var header = new FrameHeader();
+            var size = Marshal.SizeOf(header);
             Trace.Assert(size == StructSize);
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-
+            var ptr = Marshal.AllocHGlobal(size);
             Marshal.Copy(arr, 0, ptr, size);
-
             header = (FrameHeader)Marshal.PtrToStructure(ptr, header.GetType());
             Marshal.FreeHGlobal(ptr);
-
             return header;
         }
     }
@@ -79,7 +68,7 @@ public class OVRNetwork
     {
         public TcpListener tcpListener = null;
 
-        private readonly object clientsLock = new object();
+        readonly object clientsLock = new object();
         public readonly List<TcpClient> clients = new List<TcpClient>();
 
         public void StartListening(int listeningPort)
@@ -89,14 +78,9 @@ public class OVRNetwork
                 Debug.LogWarning("[OVRNetworkTcpServer] tcpListener is not null");
                 return;
             }
-
-            IPAddress localAddr = IPAddress.Parse("127.0.0.1");
-
+            var localAddr = IPAddress.Parse("127.0.0.1");
             tcpListener = new TcpListener(localAddr, listeningPort);
-            try
-            {
-                tcpListener.Start();
-            }
+            try { tcpListener.Start(); }
             catch (SocketException e)
             {
                 Debug.LogWarningFormat("[OVRNetworkTcpServer] Unsable to start TcpListener. Socket exception: {0}", e.Message);
@@ -104,19 +88,11 @@ public class OVRNetwork
                 Debug.LogWarning("If the port is forwarded through ADB, use the Android Tools in Tools/Oculus/System Metrics Profiler to kill the server");
                 tcpListener = null;
             }
-
             if (tcpListener != null)
             {
                 Debug.LogFormat("[OVRNetworkTcpServer] Start Listening on port {0}", listeningPort);
-
-                try
-                {
-                    tcpListener.BeginAcceptTcpClient(new AsyncCallback(DoAcceptTcpClientCallback), tcpListener);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarningFormat("[OVRNetworkTcpServer] can't accept new client: {0}", e.Message);
-                }
+                try { tcpListener.BeginAcceptTcpClient(new AsyncCallback(DoAcceptTcpClientCallback), tcpListener); }
+                catch (Exception e) { Debug.LogWarningFormat("[OVRNetworkTcpServer] can't accept new client: {0}", e.Message); }
             }
         }
 
@@ -127,107 +103,67 @@ public class OVRNetwork
                 Debug.LogWarning("[OVRNetworkTcpServer] tcpListener is null");
                 return;
             }
-
             lock (clientsLock)
-            {
                 clients.Clear();
-            }
             tcpListener.Stop();
             tcpListener = null;
-
             Debug.Log("[OVRNetworkTcpServer] Stopped listening");
         }
 
-        private void DoAcceptTcpClientCallback(IAsyncResult ar)
+        void DoAcceptTcpClientCallback(IAsyncResult ar)
         {
-            TcpListener listener = ar.AsyncState as TcpListener;
+            var listener = ar.AsyncState as TcpListener;
             try
             {
-                TcpClient client = listener.EndAcceptTcpClient(ar);
+                var client = listener.EndAcceptTcpClient(ar);
                 lock (clientsLock)
                 {
                     clients.Add(client);
                     Debug.Log("[OVRNetworkTcpServer] client added");
                 }
-
-                try
-                {
-                    tcpListener.BeginAcceptTcpClient(new AsyncCallback(DoAcceptTcpClientCallback), tcpListener);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarningFormat("[OVRNetworkTcpServer] can't accept new client: {0}", e.Message);
-                }
+                try { tcpListener.BeginAcceptTcpClient(new AsyncCallback(DoAcceptTcpClientCallback), tcpListener); }
+                catch (Exception e) { Debug.LogWarningFormat("[OVRNetworkTcpServer] can't accept new client: {0}", e.Message); }
             }
-            catch (ObjectDisposedException)
-            {
-                // Do nothing. It happens when stop preview in editor, which is normal behavior.
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarningFormat("[OVRNetworkTcpServer] EndAcceptTcpClient failed: {0}", e.Message);
-            }
+            catch (ObjectDisposedException) { } // Do nothing. It happens when stop preview in editor, which is normal behavior.
+            catch (Exception e) { Debug.LogWarningFormat("[OVRNetworkTcpServer] EndAcceptTcpClient failed: {0}", e.Message); }
         }
 
         public bool HasConnectedClient()
         {
             lock (clientsLock)
-            {
-                foreach (TcpClient client in clients)
-                {
+                foreach (var client in clients)
                     if (client.Connected)
-                    {
                         return true;
-                    }
-                }
-            }
             return false;
         }
 
         public void Broadcast(int payloadType, byte[] payload)
         {
-            if (payload.Length > OVRNetwork.MaxPayloadLength)
-            {
+            if (payload.Length > MaxPayloadLength)
                 Debug.LogWarningFormat("[OVRNetworkTcpServer] drop payload because it's too long: {0} bytes", payload.Length);
-            }
-
-            FrameHeader header = new FrameHeader();
-            header.protocolIdentifier = FrameHeaderMagicIdentifier;
-            header.payloadType = payloadType;
-            header.payloadLength = payload.Length;
-
-            byte[] headerBuffer = header.ToBytes();
-
-            byte[] dataBuffer = new byte[headerBuffer.Length + payload.Length];
+            var header = new FrameHeader
+            {
+                protocolIdentifier = FrameHeaderMagicIdentifier,
+                payloadType = payloadType,
+                payloadLength = payload.Length
+            };
+            var headerBuffer = header.ToBytes();
+            var dataBuffer = new byte[headerBuffer.Length + payload.Length];
             headerBuffer.CopyTo(dataBuffer, 0);
             payload.CopyTo(dataBuffer, headerBuffer.Length);
-
             lock (clientsLock)
-            {
-                foreach (TcpClient client in clients)
-                {
+                foreach (var client in clients)
                     if (client.Connected)
-                    {
-                        try
-                        {
-                            client.GetStream().BeginWrite(dataBuffer, 0, dataBuffer.Length, new AsyncCallback(DoWriteDataCallback), client.GetStream());
-                        }
+                        try { client.GetStream().BeginWrite(dataBuffer, 0, dataBuffer.Length, new AsyncCallback(DoWriteDataCallback), client.GetStream()); }
                         catch (SocketException e)
                         {
                             Debug.LogWarningFormat("[OVRNetworkTcpServer] close client because of socket error: {0}", e.Message);
                             client.GetStream().Close();
                             client.Close();
                         }
-                    }
-                }
-            }
         }
 
-        private void DoWriteDataCallback(IAsyncResult ar)
-        {
-            NetworkStream stream = ar.AsyncState as NetworkStream;
-            stream.EndWrite(ar);
-        }
+        void DoWriteDataCallback(IAsyncResult ar) => (ar.AsyncState as NetworkStream).EndWrite(ar);
     }
 
     public class OVRNetworkTcpClient
@@ -242,39 +178,13 @@ public class OVRNetwork
             Connecting
         }
 
-        public ConnectionState connectionState
-        {
-            get
-            {
-                if (tcpClient == null)
-                {
-                    return ConnectionState.Disconnected;
-                }
-                else
-                {
-                    if (tcpClient.Connected)
-                    {
-                        return ConnectionState.Connected;
-                    }
-                    else
-                    {
-                        return ConnectionState.Connecting;
-                    }
-                }
-            }
-        }
+        public ConnectionState connectionState => tcpClient == null ? ConnectionState.Disconnected : tcpClient.Connected ? ConnectionState.Connected : ConnectionState.Connecting;
 
-        public bool Connected
-        {
-            get
-            {
-                return connectionState == ConnectionState.Connected;
-            }
-        }
+        public bool Connected => connectionState == ConnectionState.Connected;
 
         TcpClient tcpClient = null;
 
-        byte[][] receivedBuffers = { new byte[OVRNetwork.MaxBufferLength], new byte[OVRNetwork.MaxBufferLength] };
+        byte[][] receivedBuffers = { new byte[MaxBufferLength], new byte[MaxBufferLength] };
         int receivedBufferIndex = 0;
         int receivedBufferDataSize = 0;
         ManualResetEvent readyReceiveDataEvent = new ManualResetEvent(true);
@@ -286,39 +196,24 @@ public class OVRNetwork
                 receivedBufferIndex = 0;
                 receivedBufferDataSize = 0;
                 readyReceiveDataEvent.Set();
-
-                string remoteAddress = "127.0.0.1";
+                var remoteAddress = "127.0.0.1";
                 tcpClient = new TcpClient(AddressFamily.InterNetwork);
                 tcpClient.BeginConnect(remoteAddress, listeningPort, new AsyncCallback(ConnectCallback), tcpClient);
-
-                if (connectionStateChangedCallback != null)
-                {
-                    connectionStateChangedCallback();
-                }
+                connectionStateChangedCallback?.Invoke();
             }
-            else
-            {
-                Debug.LogWarning("[OVRNetworkTcpClient] already connected");
-            }
+            else Debug.LogWarning("[OVRNetworkTcpClient] already connected");
         }
 
         void ConnectCallback(IAsyncResult ar)
         {
             try
             {
-                TcpClient client = ar.AsyncState as TcpClient;
+                var client = ar.AsyncState as TcpClient;
                 client.EndConnect(ar);
                 Debug.LogFormat("[OVRNetworkTcpClient] connected to {0}", client.ToString());
             }
-            catch (Exception e)
-            {
-                Debug.LogWarningFormat("[OVRNetworkTcpClient] connect error {0}", e.Message);
-            }
-
-            if (connectionStateChangedCallback != null)
-            {
-                connectionStateChangedCallback();
-            }
+            catch (Exception e) { Debug.LogWarningFormat("[OVRNetworkTcpClient] connect error {0}", e.Message); }
+            connectionStateChangedCallback?.Invoke();
         }
 
         public void Disconnect()
@@ -326,98 +221,68 @@ public class OVRNetwork
             if (tcpClient != null)
             {
                 if (!readyReceiveDataEvent.WaitOne(5))
-                {
                     Debug.LogWarning("[OVRNetworkTcpClient] readyReceiveDataEvent not signaled. data receiving timeout?");
-                }
-
                 Debug.Log("[OVRNetworkTcpClient] close tcpClient");
                 try
                 {
                     tcpClient.GetStream().Close();
                     tcpClient.Close();
                 }
-                catch (Exception e)
-                {
-                    Debug.LogWarning("[OVRNetworkTcpClient] " + e.Message);
-                }
+                catch (Exception e) { Debug.LogWarning("[OVRNetworkTcpClient] " + e.Message); }
                 tcpClient = null;
-
-                if (connectionStateChangedCallback != null)
-                {
-                    connectionStateChangedCallback();
-                }
+                connectionStateChangedCallback?.Invoke();
             }
-            else
-            {
-                Debug.LogWarning("[OVRNetworkTcpClient] not connected");
-            }
+            else Debug.LogWarning("[OVRNetworkTcpClient] not connected");
         }
 
         public void Tick()
         {
             if (tcpClient == null || !tcpClient.Connected)
-            {
                 return;
-            }
-
-            if (readyReceiveDataEvent.WaitOne(TimeSpan.Zero))
+            if (readyReceiveDataEvent.WaitOne(TimeSpan.Zero) && tcpClient.GetStream().DataAvailable)
             {
-                if (tcpClient.GetStream().DataAvailable)
+                if (receivedBufferDataSize >= MaxBufferLength)
                 {
-                    if (receivedBufferDataSize >= OVRNetwork.MaxBufferLength)
-                    {
-                        Debug.LogWarning("[OVRNetworkTcpClient] receive buffer overflow. It should not happen since we have the constraint on message size");
-                        Disconnect();
-                        return;
-                    }
-
-                    readyReceiveDataEvent.Reset();
-                    int maximumDataSize = OVRSystemPerfMetrics.MaxBufferLength - receivedBufferDataSize;
-
-                    tcpClient.GetStream().BeginRead(receivedBuffers[receivedBufferIndex], receivedBufferDataSize, maximumDataSize, new AsyncCallback(OnReadDataCallback), tcpClient.GetStream());
+                    Debug.LogWarning("[OVRNetworkTcpClient] receive buffer overflow. It should not happen since we have the constraint on message size");
+                    Disconnect();
+                    return;
                 }
+                readyReceiveDataEvent.Reset();
+                var maximumDataSize = OVRSystemPerfMetrics.MaxBufferLength - receivedBufferDataSize;
+                tcpClient.GetStream().BeginRead(receivedBuffers[receivedBufferIndex], receivedBufferDataSize, maximumDataSize, new AsyncCallback(OnReadDataCallback), tcpClient.GetStream());
             }
         }
 
         void OnReadDataCallback(IAsyncResult ar)
         {
-            NetworkStream stream = ar.AsyncState as NetworkStream;
+            var stream = ar.AsyncState as NetworkStream;
             try
             {
-                int numBytes = stream.EndRead(ar);
+                var numBytes = stream.EndRead(ar);
                 receivedBufferDataSize += numBytes;
-
                 while (receivedBufferDataSize >= FrameHeader.StructSize)
                 {
-                    FrameHeader header = FrameHeader.FromBytes(receivedBuffers[receivedBufferIndex]);
-                    if (header.protocolIdentifier != OVRNetwork.FrameHeaderMagicIdentifier)
+                    var header = FrameHeader.FromBytes(receivedBuffers[receivedBufferIndex]);
+                    if (header.protocolIdentifier != FrameHeaderMagicIdentifier)
                     {
                         Debug.LogWarning("[OVRNetworkTcpClient] header mismatch");
                         Disconnect();
                         return;
                     }
-
-                    if (header.payloadLength < 0 || header.payloadLength > OVRNetwork.MaxPayloadLength)
+                    if (header.payloadLength < 0 || header.payloadLength > MaxPayloadLength)
                     {
                         Debug.LogWarningFormat("[OVRNetworkTcpClient] Sanity check failed. PayloadLength %d", header.payloadLength);
                         Disconnect();
                         return;
                     }
-
                     if (receivedBufferDataSize >= FrameHeader.StructSize + header.payloadLength)
                     {
-                        if (payloadReceivedCallback != null)
-                        {
-                            payloadReceivedCallback(header.payloadType, receivedBuffers[receivedBufferIndex], FrameHeader.StructSize, header.payloadLength);
-                        }
-
+                        payloadReceivedCallback?.Invoke(header.payloadType, receivedBuffers[receivedBufferIndex], FrameHeader.StructSize, header.payloadLength);
                         // swap receive buffer
-                        int newBufferIndex = 1 - receivedBufferIndex;
-                        int newBufferDataSize = receivedBufferDataSize - (FrameHeader.StructSize + header.payloadLength);
+                        var newBufferIndex = 1 - receivedBufferIndex;
+                        var newBufferDataSize = receivedBufferDataSize - (FrameHeader.StructSize + header.payloadLength);
                         if (newBufferDataSize > 0)
-                        {
-                            Array.Copy(receivedBuffers[receivedBufferIndex], (FrameHeader.StructSize + header.payloadLength), receivedBuffers[newBufferIndex], 0, newBufferDataSize);
-                        }
+                            Array.Copy(receivedBuffers[receivedBufferIndex], FrameHeader.StructSize + header.payloadLength, receivedBuffers[newBufferIndex], 0, newBufferDataSize);
                         receivedBufferIndex = newBufferIndex;
                         receivedBufferDataSize = newBufferDataSize;
                     }

@@ -23,7 +23,7 @@ namespace Oculus.Platform
 
         void OnDestroy()
         {
-            if (UnityApplication.isEditor)
+            if (UnityEngine.Application.isEditor)
                 ovr_UnityResetTestPlatform();
         }
     }

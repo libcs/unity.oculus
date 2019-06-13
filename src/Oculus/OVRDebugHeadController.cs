@@ -15,7 +15,6 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
 
 /// <summary>
 /// This is a simple behavior that can be attached to a parent of the CameraRig in order
@@ -55,64 +54,48 @@ public class OVRDebugHeadController : MonoBehaviour
     void Awake()
     {
         // locate the camera rig so we can use it to get the current camera transform each frame
-        OVRCameraRig[] CameraRigs = gameObject.GetComponentsInChildren<OVRCameraRig>();
-
-        if (CameraRigs.Length == 0)
-            Debug.LogWarning("OVRCamParent: No OVRCameraRig attached.");
-        else if (CameraRigs.Length > 1)
-            Debug.LogWarning("OVRCamParent: More then 1 OVRCameraRig attached.");
-        else
-            CameraRig = CameraRigs[0];
+        var CameraRigs = gameObject.GetComponentsInChildren<OVRCameraRig>();
+        if (CameraRigs.Length == 0) Debug.LogWarning("OVRCamParent: No OVRCameraRig attached.");
+        else if (CameraRigs.Length > 1) Debug.LogWarning("OVRCamParent: More then 1 OVRCameraRig attached.");
+        else CameraRig = CameraRigs[0];
     }
 
     // Use this for initialization
-    void Start()
-    {
-
-    }
+    void Start() { }
 
     // Update is called once per frame
     void Update()
     {
         if (AllowMovement)
         {
-            float gamePad_FwdAxis = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick).y;
-            float gamePad_StrafeAxis = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick).x;
-
-            Vector3 fwdMove = (CameraRig.centerEyeAnchor.rotation * Vector3.forward) * gamePad_FwdAxis * Time.deltaTime * ForwardSpeed;
-            Vector3 strafeMove = (CameraRig.centerEyeAnchor.rotation * Vector3.right) * gamePad_StrafeAxis * Time.deltaTime * StrafeSpeed;
+            var gamePad_FwdAxis = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick).y;
+            var gamePad_StrafeAxis = OVRInput.Get(OVRInput.RawAxis2D.LThumbstick).x;
+            var fwdMove = (CameraRig.centerEyeAnchor.rotation * Vector3.forward) * gamePad_FwdAxis * Time.deltaTime * ForwardSpeed;
+            var strafeMove = (CameraRig.centerEyeAnchor.rotation * Vector3.right) * gamePad_StrafeAxis * Time.deltaTime * StrafeSpeed;
             transform.position += fwdMove + strafeMove;
         }
-
-#if UNITY_2017_2_OR_NEWER
-		if ( !UnityEngine.XR.XRDevice.isPresent && ( AllowYawLook || AllowPitchLook ) )
-#else
-        if (!UnityEngine.VR.VRDevice.isPresent && (AllowYawLook || AllowPitchLook))
-#endif
+        if (!UnityEngine.XR.XRDevice.isPresent && (AllowYawLook || AllowPitchLook))
         {
-            Quaternion r = transform.rotation;
+            var r = transform.rotation;
             if (AllowYawLook)
             {
-                float gamePadYaw = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick).x;
-                float yawAmount = gamePadYaw * Time.deltaTime * GamePad_YawDegreesPerSec;
-                Quaternion yawRot = Quaternion.AngleAxis(yawAmount, Vector3.up);
+                var gamePadYaw = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick).x;
+                var yawAmount = gamePadYaw * Time.deltaTime * GamePad_YawDegreesPerSec;
+                var yawRot = Quaternion.AngleAxis(yawAmount, Vector3.up);
                 r = yawRot * r;
             }
             if (AllowPitchLook)
             {
-                float gamePadPitch = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick).y;
+                var gamePadPitch = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick).y;
                 if (Mathf.Abs(gamePadPitch) > 0.0001f)
                 {
                     if (InvertPitch)
-                    {
                         gamePadPitch *= -1.0f;
-                    }
-                    float pitchAmount = gamePadPitch * Time.deltaTime * GamePad_PitchDegreesPerSec;
-                    Quaternion pitchRot = Quaternion.AngleAxis(pitchAmount, Vector3.left);
+                    var pitchAmount = gamePadPitch * Time.deltaTime * GamePad_PitchDegreesPerSec;
+                    var pitchRot = Quaternion.AngleAxis(pitchAmount, Vector3.left);
                     r = r * pitchRot;
                 }
             }
-
             transform.rotation = r;
         }
     }

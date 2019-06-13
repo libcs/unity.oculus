@@ -21,14 +21,10 @@ using UnityEngine;
 /// </summary>
 public class OVRModeParms : MonoBehaviour
 {
-    #region Member Variables
-
     /// <summary>
     /// The gamepad button that will switch the application to CPU level 0 and GPU level 1.
     /// </summary>
     public OVRInput.RawButton resetButton = OVRInput.RawButton.X;
-
-    #endregion
 
     /// <summary>
     /// Invoke power state mode test.
@@ -40,7 +36,6 @@ public class OVRModeParms : MonoBehaviour
             enabled = false;
             return;
         }
-
         // Call TestPowerLevelState after 10 seconds
         // and repeats every 10 seconds.
         InvokeRepeating("TestPowerStateMode", 10, 10.0f);
@@ -73,9 +68,7 @@ public class OVRModeParms : MonoBehaviour
         // Check power-level state mode
         //*************************
         if (OVRPlugin.powerSaving)
-        {
             // The device has been throttled
             Debug.Log("POWER SAVE MODE ACTIVATED");
-        }
     }
 }

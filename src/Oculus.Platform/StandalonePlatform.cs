@@ -12,7 +12,7 @@ namespace Oculus.Platform
         public Request<Models.PlatformInitialize> InitializeInEditor()
         {
             string appID;
-            if (UnityApplication.platform == RuntimePlatform.Android)
+            if (UnityEngine.Application.platform == RuntimePlatform.Android)
             {
                 if (string.IsNullOrEmpty(PlatformSettings.MobileAppID))
                     throw new UnityException("Update your App ID by selecting 'Oculus Platform' -> 'Edit Settings'");
