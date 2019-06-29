@@ -1,17 +1,9 @@
-﻿// TES
-//using Redirect = Gamer.Estate.Tes.Loader.LoadAsset;
-//using Redirect = Gamer.Estate.Tes.Loader.LoadData;
-using Redirect = Gamer.Estate.Tes.Loader.LoadEngine;
+﻿//using Redirect = Sample.Room.LoadEngine;
 
-// ULTIMA
-//using Redirect = Gamer.Estate.Ultima.Loader.LoadAsset;
-//using Redirect = Gamer.Estate.Ultima.Loader.LoadData;
-//using Redirect = Gamer.Estate.Ultima.Loader.LoadEngine;
-
-public class RedirectLoader : UnityEngine.MonoBehaviour
-{
-    public static void Awake() => Redirect.Awake();
-    public static void Start() => Redirect.Start();
-    public static void OnDestroy() => Redirect.OnDestroy();
-    public static void Update() => Redirect.Update();
-}
+//public class RedirectLoader : UnityEngine.MonoBehaviour
+//{
+//    public static void Awake() => Redirect.Awake();
+//    public static void Start() => Redirect.Start();
+//    public static void OnDestroy() => Redirect.OnDestroy();
+//    public static void Update() => Redirect.Update();
+//}

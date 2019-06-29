@@ -8,7 +8,7 @@ namespace Oculus.Platform
 {
     public class CAPI
     {
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+#if _WIN
 #if UNITY_64 || UNITY_EDITOR_64
         public const string DLL_NAME = "LibOVRPlatform64_1";
 #else

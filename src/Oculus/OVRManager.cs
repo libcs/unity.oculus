@@ -672,7 +672,7 @@ public class OVRManager : MonoBehaviour
     /// </summary>
     public TrackingOrigin trackingOriginType
     {
-        get => !isHmdPresent ? _trackingOriginType : (TrackingOrigin)OVRPlugin.GetTrackingOriginType();
+        get => !isHmdPresent ? _trackingOriginType : (TrackingOrigin)OVRPlugin.TrackingOriginType;
         set
         {
             if (!isHmdPresent)
@@ -871,7 +871,7 @@ public class OVRManager : MonoBehaviour
             return;
         }
 
-        if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+        if (OVRPlugin.isAndroid)
             // Turn off chromatic aberration by default to save texture bandwidth.
             chromatic = false;
 
@@ -892,7 +892,7 @@ public class OVRManager : MonoBehaviour
             }
             if (createMrcConfig)
                 mrcSettings.WriteToConfigurationFile();
-            ScriptableObject.Destroy(mrcSettings);
+            Destroy(mrcSettings);
         }
         if (MixedRealityEnabledFromCmd())
             enableMixedReality = true;
@@ -906,7 +906,7 @@ public class OVRManager : MonoBehaviour
 #endif
 
 #if _WIN
-        if (enableAdaptiveResolution && !OVRManager.IsAdaptiveResSupportedByEngine())
+        if (enableAdaptiveResolution && !IsAdaptiveResSupportedByEngine())
         {
             enableAdaptiveResolution = false;
             Debug.LogError("Your current Unity Engine " + Application.unityVersion + " might have issues to support adaptive resolution, please disable it under OVRManager");

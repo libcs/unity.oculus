@@ -51,25 +51,21 @@ namespace Oculus.Platform
                 if (instance == null)
                 {
                     instance = Resources.Load<PlatformSettings>("OculusPlatformSettings");
-
                     // This can happen if the developer never input their App Id into the Unity Editor
                     // and therefore never created the OculusPlatformSettings.asset file
                     // Use a dummy object with defaults for the getters so we don't have a null pointer exception
                     if (instance == null)
                     {
                         instance = CreateInstance<PlatformSettings>();
-
-#if UNITY_EDITOR
-            // Only in the editor should we save it to disk
-            var properPath = System.IO.Path.Combine(UnityEngine.Application.dataPath, "Resources");
-            if (!System.IO.Directory.Exists(properPath))
-              UnityEditor.AssetDatabase.CreateFolder("Assets", "Resources");
-            var fullPath = System.IO.Path.Combine(
-              System.IO.Path.Combine("Assets", "Resources"),
-              "OculusPlatformSettings.asset"
-            );
-            UnityEditor.AssetDatabase.CreateAsset(instance, fullPath);
-#endif
+                        //if (UnityEngine.Application.isEditor)
+                        //{
+                        //    // Only in the editor should we save it to disk
+                        //    var properPath = System.IO.Path.Combine(UnityEngine.Application.dataPath, "Resources");
+                        //    if (!System.IO.Directory.Exists(properPath))
+                        //        UnityEditor.AssetDatabase.CreateFolder("Assets", "Resources");
+                        //    var fullPath = System.IO.Path.Combine(System.IO.Path.Combine("Assets", "Resources"), "OculusPlatformSettings.asset");
+                        //    UnityEditor.AssetDatabase.CreateAsset(instance, fullPath);
+                        //}
                     }
                 }
                 return instance;

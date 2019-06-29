@@ -4,8 +4,12 @@
     <TargetFramework>net471</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;_WIN</DefineConstants>
+  </PropertyGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetDir)Oculus.Platform.*&quot; &quot;$(ProjectDir)..\Loaders\Unity\Assets\Plugins\&quot;&#xD;&#xA;" />
+    <Exec Command="copy &quot;$(TargetDir)Oculus.Platform.*&quot; &quot;$(ProjectDir)..\Loaders\Unity.Oculus\Assets\Plugins\&quot;&#xD;&#xA;" />
   </Target>
 
   <ItemGroup>

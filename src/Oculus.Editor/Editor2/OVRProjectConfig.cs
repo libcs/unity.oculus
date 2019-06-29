@@ -19,51 +19,41 @@ limitations under the License.
 
 ************************************************************************************/
 
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 [System.Serializable]
 public class OVRProjectConfig : ScriptableObject
 {
-	public enum DeviceType
-	{
-		GearVrOrGo = 0,
-		Quest = 1
-	}
+    public enum DeviceType
+    {
+        GearVrOrGo = 0,
+        Quest = 1
+    }
 
-	public List<DeviceType> targetDeviceTypes;
+    public List<DeviceType> targetDeviceTypes;
 
-	public const string OculusProjectConfigAssetPath = "Assets/Oculus/OculusProjectConfig.asset";
+    public const string OculusProjectConfigAssetPath = "Assets/Oculus/OculusProjectConfig.asset";
 
-	public static OVRProjectConfig GetProjectConfig()
-	{
-		OVRProjectConfig projectConfig = null;
-		try
-		{
-			projectConfig = AssetDatabase.LoadAssetAtPath(OculusProjectConfigAssetPath, typeof(OVRProjectConfig)) as OVRProjectConfig;
-		}
-		catch (System.Exception e)
-		{
-			Debug.LogWarningFormat("Unable to load ProjectConfig from {0}, error {1}", OculusProjectConfigAssetPath, e.Message);
-		}
-		if (projectConfig == null)
-		{
-			projectConfig = ScriptableObject.CreateInstance<OVRProjectConfig>();
-			projectConfig.targetDeviceTypes = new List<DeviceType>();
-			projectConfig.targetDeviceTypes.Add(DeviceType.GearVrOrGo);
-			AssetDatabase.CreateAsset(projectConfig, OculusProjectConfigAssetPath);
-		}
-		return projectConfig;
-	}
+    public static OVRProjectConfig GetProjectConfig()
+    {
+        OVRProjectConfig projectConfig = null;
+        try { projectConfig = AssetDatabase.LoadAssetAtPath(OculusProjectConfigAssetPath, typeof(OVRProjectConfig)) as OVRProjectConfig; }
+        catch (System.Exception e) { Debug.LogWarningFormat("Unable to load ProjectConfig from {0}, error {1}", OculusProjectConfigAssetPath, e.Message); }
+        if (projectConfig == null)
+        {
+            projectConfig = CreateInstance<OVRProjectConfig>();
+            projectConfig.targetDeviceTypes = new List<DeviceType> { DeviceType.GearVrOrGo };
+            AssetDatabase.CreateAsset(projectConfig, OculusProjectConfigAssetPath);
+        }
+        return projectConfig;
+    }
 
-	public static void CommitProjectConfig(OVRProjectConfig projectConfig)
-	{
-		if (AssetDatabase.GetAssetPath(projectConfig) != OculusProjectConfigAssetPath)
-		{
-			Debug.LogWarningFormat("The asset path of ProjectConfig is wrong. Expect {0}, get {1}", OculusProjectConfigAssetPath, AssetDatabase.GetAssetPath(projectConfig));
-		}
-		EditorUtility.SetDirty(projectConfig);
-	}
+    public static void CommitProjectConfig(OVRProjectConfig projectConfig)
+    {
+        if (AssetDatabase.GetAssetPath(projectConfig) != OculusProjectConfigAssetPath)
+            Debug.LogWarningFormat("The asset path of ProjectConfig is wrong. Expect {0}, get {1}", OculusProjectConfigAssetPath, AssetDatabase.GetAssetPath(projectConfig));
+        EditorUtility.SetDirty(projectConfig);
+    }
 }

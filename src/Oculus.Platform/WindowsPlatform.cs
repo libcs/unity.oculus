@@ -6,17 +6,11 @@ namespace Oculus.Platform
 
     public class WindowsPlatform
     {
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void UnityLogDelegate(IntPtr tag, IntPtr msg);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] public delegate void UnityLogDelegate(IntPtr tag, IntPtr msg);
 
         void CPPLogCallback(IntPtr tag, IntPtr message) => Debug.Log(string.Format("{0}: {1}", Marshal.PtrToStringAnsi(tag), Marshal.PtrToStringAnsi(message)));
 
-        IntPtr getCallbackPointer()
-        {
-            //UnityLogDelegate callback_delegate = new UnityLogDelegate(CPPLogCallback);
-            //IntPtr intptr_delegate = Marshal.GetFunctionPointerForDelegate(callback_delegate);
-            return IntPtr.Zero;
-        }
+        IntPtr getCallbackPointer() => IntPtr.Zero; // Marshal.GetFunctionPointerForDelegate(new UnityLogDelegate(CPPLogCallback));
 
         public bool Initialize(string appId)
         {

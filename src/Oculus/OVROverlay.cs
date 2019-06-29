@@ -184,7 +184,7 @@ public class OVROverlay : MonoBehaviour
     static Material tex2DMaterial;
     static Material cubeMaterial;
 
-    OVRPlugin.LayerLayout layout => Application.platform == RuntimePlatform.Android && !Application.isEditor
+    OVRPlugin.LayerLayout layout => OVRPlugin.isAndroid
         && textures.Length == 2 && textures[1] != null
             ? OVRPlugin.LayerLayout.Stereo
             : OVRPlugin.LayerLayout.Mono;

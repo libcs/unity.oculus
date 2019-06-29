@@ -187,10 +187,8 @@ public class OVRCubemapCapture : MonoBehaviour
         if (string.IsNullOrEmpty(fileName))
             fileName = "OVR_" + System.DateTime.Now.ToString("hh_mm_ss") + ".png";
         var extName = Path.GetExtension(fileName);
-        if (extName == ".png")
-            saveToPNG = true;
-        else if (extName == ".jpg")
-            saveToPNG = false;
+        if (extName == ".png") saveToPNG = true;
+        else if (extName == ".jpg") saveToPNG = false;
         else
         {
             Debug.LogError("Unsupported file format" + extName);
@@ -212,7 +210,7 @@ public class OVRCubemapCapture : MonoBehaviour
         }
         // Merge all the cubemap faces into the texture
         // Reference cubemap format: http://docs.unity3d.com/Manual/class-Cubemap.html
-        var faces = new [] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
+        var faces = new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
         for (var i = 0; i < faces.Length; i++)
         {
             // get the pixels from the cubemap

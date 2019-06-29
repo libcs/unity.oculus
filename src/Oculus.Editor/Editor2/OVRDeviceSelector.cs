@@ -19,28 +19,8 @@ limitations under the License.
 
 ************************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
-
 public class OVRDeviceSelector
 {
-	public static bool isTargetDeviceGearVrOrGo
-	{
-		get
-		{
-			OVRProjectConfig projectConfig = OVRProjectConfig.GetProjectConfig();
-			return projectConfig.targetDeviceTypes.Contains(OVRProjectConfig.DeviceType.GearVrOrGo);
-		}
-	}
-
-	public static bool isTargetDeviceQuest
-	{
-		get
-		{
-			OVRProjectConfig projectConfig = OVRProjectConfig.GetProjectConfig();
-			return projectConfig.targetDeviceTypes.Contains(OVRProjectConfig.DeviceType.Quest);
-		}
-	}
+    public static bool isTargetDeviceGearVrOrGo => OVRProjectConfig.GetProjectConfig().targetDeviceTypes.Contains(OVRProjectConfig.DeviceType.GearVrOrGo);
+    public static bool isTargetDeviceQuest => OVRProjectConfig.GetProjectConfig().targetDeviceTypes.Contains(OVRProjectConfig.DeviceType.Quest);
 }

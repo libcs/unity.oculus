@@ -622,7 +622,7 @@ namespace UnityEngine.EventSystems
                 return (pointerEvent.pressPosition - pointerEvent.position).sqrMagnitude >= eventSystem.pixelDragThreshold * eventSystem.pixelDragThreshold;
             else
             {
-                if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+                if (OVRPlugin.isAndroid)
                     // On android allow swiping to start drag
                     if (useSwipeScroll && ((Vector3)pointerEvent.GetSwipeStart() - Input.mousePosition).magnitude > swipeDragThreshold)
                         return true;
@@ -654,7 +654,7 @@ namespace UnityEngine.EventSystems
 
         protected Vector2 SwipeAdjustedPosition(Vector2 originalPosition, PointerEventData pointerEvent)
         {
-            if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+            if (OVRPlugin.isAndroid)
                 // On android we use the touchpad position (accessed through Input.mousePosition) to modify
                 // the effective cursor position for events related to dragging. This allows the user to
                 // use the touchpad to drag draggable UI elements
@@ -715,7 +715,7 @@ namespace UnityEngine.EventSystems
         {
             var pressed = Input.GetKeyDown(gazeClickKey) || OVRInput.GetDown(joyPadClickButton);
             var released = Input.GetKeyUp(gazeClickKey) || OVRInput.GetUp(joyPadClickButton);
-            if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+            if (OVRPlugin.isAndroid)
             {
                 // On Gear VR the mouse button events correspond to touch pad events. We only use these as gaze pointer clicks
                 // on Gear VR because on PC the mouse clicks are used for actual mouse pointer interactions.

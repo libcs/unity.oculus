@@ -69,7 +69,7 @@ public class OVRPlatformMenu : MonoBehaviour
     /// </summary>
     void ShowConfirmQuitMenu()
     {
-        if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+        if (OVRPlugin.isAndroid)
         {
             Debug.Log("[PlatformUI-ConfirmQuit] Showing @ " + Time.time);
             OVRManager.PlatformUIConfirmQuit();

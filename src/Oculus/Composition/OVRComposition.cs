@@ -1,5 +1,3 @@
-// SKYTODO
-
 /************************************************************************************
 Copyright : Copyright (c) Facebook Technologies, LLC and its affiliates. All rights reserved.
 
@@ -17,77 +15,62 @@ permissions and limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
-using System.Collections;
 
 #if _WIN
 
-public abstract class OVRComposition {
+public abstract class OVRComposition
+{
+    public bool cameraInTrackingSpace = false;
+    public OVRCameraRig cameraRig = null;
 
-	public bool cameraInTrackingSpace = false;
-	public OVRCameraRig cameraRig = null;
+    protected OVRComposition(GameObject parentObject, Camera mainCamera)
+    {
+        var cameraRig = mainCamera.GetComponentInParent<OVRCameraRig>();
+        if (cameraRig == null)
+            cameraRig = parentObject.GetComponent<OVRCameraRig>();
+        cameraInTrackingSpace = cameraRig != null && cameraRig.trackingSpace != null;
+        this.cameraRig = cameraRig;
+    }
 
-	protected OVRComposition(GameObject parentObject, Camera mainCamera)
-	{
-		OVRCameraRig cameraRig = mainCamera.GetComponentInParent<OVRCameraRig>();
-		if (cameraRig == null)
-		{
-			cameraRig = parentObject.GetComponent<OVRCameraRig>();
-		}
-		cameraInTrackingSpace = (cameraRig != null && cameraRig.trackingSpace != null);
-		this.cameraRig = cameraRig;
-	}
+    public abstract OVRManager.CompositionMethod CompositionMethod();
 
-	public abstract OVRManager.CompositionMethod CompositionMethod();
+    public abstract void Update(Camera mainCamera);
+    public abstract void Cleanup();
 
-	public abstract void Update(Camera mainCamera);
-	public abstract void Cleanup();
+    public virtual void RecenterPose() { }
 
-	public virtual void RecenterPose() { }
+    protected bool usingLastAttachedNodePose = false;
+    protected OVRPose lastAttachedNodePose = new OVRPose();            // Sometimes the attach node pose is not readable (lose tracking, low battery, etc.) Use the last pose instead when it happens
 
-	protected bool usingLastAttachedNodePose = false;
-	protected OVRPose lastAttachedNodePose = new OVRPose();            // Sometimes the attach node pose is not readable (lose tracking, low battery, etc.) Use the last pose instead when it happens
+    public OVRPose ComputeCameraWorldSpacePose(OVRPlugin.CameraExtrinsics extrinsics) => OVRExtensions.ToWorldSpacePose(ComputeCameraTrackingSpacePose(extrinsics));
 
-	public OVRPose ComputeCameraWorldSpacePose(OVRPlugin.CameraExtrinsics extrinsics)
-	{
-		OVRPose trackingSpacePose = ComputeCameraTrackingSpacePose(extrinsics);
-		OVRPose worldSpacePose = OVRExtensions.ToWorldSpacePose(trackingSpacePose);
-		return worldSpacePose;
-	}
-
-	public OVRPose ComputeCameraTrackingSpacePose(OVRPlugin.CameraExtrinsics extrinsics)
-	{
-		OVRPose trackingSpacePose = new OVRPose();
-
-		OVRPose cameraTrackingSpacePose = extrinsics.RelativePose.ToOVRPose();
-		trackingSpacePose = cameraTrackingSpacePose;
-
-		if (extrinsics.AttachedToNode != OVRPlugin.Node.None && OVRPlugin.GetNodePresent(extrinsics.AttachedToNode))
-		{
-			if (usingLastAttachedNodePose)
-			{
-				Debug.Log("The camera attached node get tracked");
-				usingLastAttachedNodePose = false;
-			}
-			OVRPose attachedNodePose = OVRPlugin.GetNodePose(extrinsics.AttachedToNode, OVRPlugin.Step.Render).ToOVRPose();
-			lastAttachedNodePose = attachedNodePose;
-			trackingSpacePose = attachedNodePose * trackingSpacePose;
-		}
-		else
-		{
-			if (extrinsics.AttachedToNode != OVRPlugin.Node.None)
-			{
-				if (!usingLastAttachedNodePose)
-				{
-					Debug.LogWarning("The camera attached node could not be tracked, using the last pose");
-					usingLastAttachedNodePose = true;
-				}
-				trackingSpacePose = lastAttachedNodePose * trackingSpacePose;
-			}
-		}
-
-		return trackingSpacePose;
-	}
-
+    public OVRPose ComputeCameraTrackingSpacePose(OVRPlugin.CameraExtrinsics extrinsics)
+    {
+        var trackingSpacePose = new OVRPose();
+        var cameraTrackingSpacePose = extrinsics.RelativePose.ToOVRPose();
+        trackingSpacePose = cameraTrackingSpacePose;
+        if (extrinsics.AttachedToNode != OVRPlugin.Node.None && OVRPlugin.GetNodePresent(extrinsics.AttachedToNode))
+        {
+            if (usingLastAttachedNodePose)
+            {
+                Debug.Log("The camera attached node get tracked");
+                usingLastAttachedNodePose = false;
+            }
+            var attachedNodePose = OVRPlugin.GetNodePose(extrinsics.AttachedToNode, OVRPlugin.Step.Render).ToOVRPose();
+            lastAttachedNodePose = attachedNodePose;
+            trackingSpacePose = attachedNodePose * trackingSpacePose;
+        }
+        else if (extrinsics.AttachedToNode != OVRPlugin.Node.None)
+        {
+            if (!usingLastAttachedNodePose)
+            {
+                Debug.LogWarning("The camera attached node could not be tracked, using the last pose");
+                usingLastAttachedNodePose = true;
+            }
+            trackingSpacePose = lastAttachedNodePose * trackingSpacePose;
+        }
+        return trackingSpacePose;
+    }
 }
 
 #endif

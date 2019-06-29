@@ -5,18 +5,44 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;_WIN</DefineConstants>
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetDir)Gamer.Core*.*&quot; &quot;$(ProjectDir)..\..\..\Loaders\Unity\Assets\Plugins\&quot;&#xD;&#xA;copy &quot;%userprofile%\.nuget\packages\zstdnet\1.3.3\lib\netstandard2.0\*.*&quot; &quot;$(ProjectDir)..\..\..\Loaders\Unity\Assets\Plugins\&quot;" />
+    <Exec Command="copy &quot;$(TargetDir)Oculus.Editor*&quot; &quot;$(ProjectDir)..\Loaders\Unity.Oculus\Assets\Plugins\Editor\&quot;&#xD;&#xA;" />
   </Target>
 
   <ItemGroup>
+    <Compile Remove="Editor2\**" />
+    <EmbeddedResource Remove="Editor2\**" />
     <None Remove="**\*.swift" />
+    <None Remove="Editor2\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Editor2\OVRADBTool.cs" />
+    <Compile Include="Editor2\OVRBuild.cs" />
+    <Compile Include="Editor2\OVRDeviceSelector.cs" />
+    <Compile Include="Editor2\OVRPluginUpdaterStub.cs" />
+    <Compile Include="Editor2\OVRProjectConfig.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Editor2\AndroidManifest.OVRSubmission.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Editor2\Oculus.VR.Editor.asmdef" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oculus\Oculus.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="UnityEditor">
+      <HintPath>..\..\lib\Unity\UnityEditor.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\lib\Unity\UnityEngine.dll</HintPath>
     </Reference>

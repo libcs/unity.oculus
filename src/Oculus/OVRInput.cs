@@ -283,7 +283,7 @@ public static class OVRInput
     /// </summary>
     static OVRInput()
     {
-        if (Application.platform == RuntimePlatform.Android && !Application.isEditor)
+        if (OVRPlugin.isAndroid)
             controllers = new List<OVRControllerBase>
             {
                 new OVRControllerGamepadAndroid(),
@@ -1438,8 +1438,8 @@ public static class OVRInput
             if ((controllerType & Controller.LTouch) == Controller.LTouch && IsValidOpenVRDevice(openVRControllerDetails[0].deviceID))
             {
                 var leftControllerState = openVRControllerDetails[0].state;
-                if ((leftControllerState.ulButtonPressed & OpenVRButton.Two) == OpenVRButton.Two) state.Buttons |= (uint)RawButton.Y;
-                if ((leftControllerState.ulButtonPressed & OpenVRButton.Thumbstick) == OpenVRButton.Thumbstick) state.Buttons |= (uint)RawButton.LThumbstick;
+                if ((leftControllerState.ulButtonPressed & (ulong)OpenVRButton.Two) == (ulong)OpenVRButton.Two) state.Buttons |= (uint)RawButton.Y;
+                if ((leftControllerState.ulButtonPressed & (ulong)OpenVRButton.Thumbstick) == (ulong)OpenVRButton.Thumbstick) state.Buttons |= (uint)RawButton.LThumbstick;
                 state.LIndexTrigger = leftControllerState.rAxis1.x;
                 if (openVRControllerDetails[0].controllerType == OpenVRController.OculusTouch || openVRControllerDetails[0].controllerType == OpenVRController.ViveController)
                 {
@@ -1452,13 +1452,13 @@ public static class OVRInput
                     state.LThumbstick.y = leftControllerState.rAxis2.y;
                 }
                 if (openVRControllerDetails[0].controllerType == OpenVRController.OculusTouch) state.LHandTrigger = leftControllerState.rAxis2.x;
-                else if (openVRControllerDetails[0].controllerType == OpenVRController.ViveController || openVRControllerDetails[0].controllerType == OpenVRController.WindowsMRController) state.LHandTrigger = ((leftControllerState.ulButtonPressed & OpenVRButton.Grip) == OpenVRButton.Grip) ? 1 : 0;
+                else if (openVRControllerDetails[0].controllerType == OpenVRController.ViveController || openVRControllerDetails[0].controllerType == OpenVRController.WindowsMRController) state.LHandTrigger = ((leftControllerState.ulButtonPressed & (ulong)OpenVRButton.Grip) == (ulong)OpenVRButton.Grip) ? 1 : 0;
             }
             if ((controllerType & Controller.RTouch) == Controller.RTouch && IsValidOpenVRDevice(openVRControllerDetails[1].deviceID))
             {
                 var rightControllerState = openVRControllerDetails[1].state;
-                if ((rightControllerState.ulButtonPressed & OpenVRButton.Two) == OpenVRButton.Two) state.Buttons |= (uint)RawButton.B;
-                if ((rightControllerState.ulButtonPressed & OpenVRButton.Thumbstick) == OpenVRButton.Thumbstick) state.Buttons |= (uint)RawButton.RThumbstick;
+                if ((rightControllerState.ulButtonPressed & (ulong)OpenVRButton.Two) == (ulong)OpenVRButton.Two) state.Buttons |= (uint)RawButton.B;
+                if ((rightControllerState.ulButtonPressed & (ulong)OpenVRButton.Thumbstick) == (ulong)OpenVRButton.Thumbstick) state.Buttons |= (uint)RawButton.RThumbstick;
                 state.RIndexTrigger = rightControllerState.rAxis1.x;
                 if (openVRControllerDetails[1].controllerType == OpenVRController.OculusTouch || openVRControllerDetails[1].controllerType == OpenVRController.ViveController)
                 {
@@ -1471,7 +1471,7 @@ public static class OVRInput
                     state.RThumbstick.y = rightControllerState.rAxis2.y;
                 }
                 if (openVRControllerDetails[1].controllerType == OpenVRController.OculusTouch) state.RHandTrigger = rightControllerState.rAxis2.x;
-                else if (openVRControllerDetails[1].controllerType == OpenVRController.ViveController || openVRControllerDetails[1].controllerType == OpenVRController.WindowsMRController) state.RHandTrigger = ((rightControllerState.ulButtonPressed & OpenVRButton.Grip) == OpenVRButton.Grip) ? 1 : 0;
+                else if (openVRControllerDetails[1].controllerType == OpenVRController.ViveController || openVRControllerDetails[1].controllerType == OpenVRController.WindowsMRController) state.RHandTrigger = ((rightControllerState.ulButtonPressed & (ulong)OpenVRButton.Grip) == (ulong)OpenVRButton.Grip) ? 1 : 0;
             }
             return state;
         }

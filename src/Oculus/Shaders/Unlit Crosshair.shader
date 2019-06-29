@@ -73,7 +73,4 @@ Shader "Unlit/Crosshair" {
 			ENDCG
 		}
 	}
-	
-	
 }
-
